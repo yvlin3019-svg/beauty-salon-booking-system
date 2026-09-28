@@ -54,7 +54,7 @@
 #### 3. 後台管理 (Google Sheet & Calendar)
 | Google Calendar 自動同步 | 營業時段與排班控制 | CRM 顧客歷史紀錄 |
 | :---: | :---: | :---: |
-| ![Calendar](images/demo_calendar.png) | ![營業時段](images/demo_sheet_schedule.png) | ![CRM](images/demo_sheet_crm.png) |
+| ![Calendar](images/333.png) | ![營業時段](images/444.png) | ![CRM](images/666.png) |
 
 ---
 
