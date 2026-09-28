@@ -1,0 +1,1844 @@
+{\rtf1\ansi\ansicpg950\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 /**\
+ * ============================================================\
+ * \uc0\u32654 \u26989 \u38928 \u32004 \u31995 \u32113  - Google Apps Script \u24460 \u31471 \
+ * ============================================================\
+ * \uc0\u37096 \u32626 \u26041 \u24335 \u35531 \u21443 \u32771  README.md\
+ * ============================================================\
+ */\
+\
+// ------------------------------------------------------------\
+// 1. \uc0\u22522 \u26412 \u35373 \u23450 \
+// ------------------------------------------------------------\
+const CONFIG = \{\
+  CALENDAR_ID: 'primary',\
+  SPREADSHEET_ID: \'91YOUR_SPREADSHEET_ID_HERE,\
+  CUSTOMER_SHEET_NAME: '\uc0\u23458 \u20154 \u36039 \u26009 ',\
+  BOOKING_LOG_SHEET_NAME: '\uc0\u38928 \u32004 \u32000 \u37636 ',\
+  SCHEDULE_SHEET_NAME: '\uc0\u29151 \u26989 \u26178 \u27573 \u35373 \u23450 ',\
+\
+  MIN_LEAD_TIME_MINUTES: 60,\
+  BOOKING_WINDOW_DAYS: 60,\
+\
+  // ----------------------------------------------------------\
+  // \uc0\u26381 \u21209 \u20998 \u39006 \u65306 \u38695 \u30473  / \u25509 \u30571 \u27611 \
+  // \uc0\u27599 \u20491 \u20998 \u39006 \u24213 \u19979 \u26377 \u65306 \u20027 \u35201 \u38917 \u30446 (mainItems\u65292 \u21934 \u36984 \u24517 \u22635 )\u12289 \
+  // \uc0\u21152 \u36092 \u32676 \u32068 (addonGroups\u65292 \u27599 \u32068 \u21508 \u33258 \u19968 \u20491 \u19979 \u25289 \u65292 \u38928 \u35373 \u12300 \u28961 \u12301 )\u12289 \
+  // \uc0\u20778 \u24800 (discounts + discountMode: 'multi'=\u21487 \u35079 \u36984 checkbox / 'single'=\u21934 \u36984 \u19979 \u25289 )\
+  // \uc0\u20197 \u21450 \u34899 \u21069 \u27880 \u24847 \u20107 \u38917 \u20840 \u25991 (noticeText)\
+  // ----------------------------------------------------------\
+  CATEGORIES: [\
+    \{\
+      id: 'eyebrow',\
+      name: '\uc0\u30473 \u27611 \u38917 \u30446 ',\
+      noticeTitle: '\uc0\u38695 \u30473 \u34899 \u21069 \u27880 \u24847 \u20107 \u38917 ',\
+      noticeText:\
+        '\uc0\u9312  \u25805 \u20316 \u26178 \u38291 \u32004 3~3.5\u23567 \u26178 \u65292 \u35531 \u38928 \u30041 4\u23567 \u26178 \u26178 \u38291 \\n\\n' +\
+        '\uc0\u9313  \u38695 \u30473 \u21069 1~2\u36913 \u36991 \u20813 \u29100 \u22812 \u12289 \u21917 \u37202 \u65292 \u35531 \u36275 \u22816 \u20241 \u24687 \u65281 \\n\\n' +\
+        '\uc0\u9314  \u26045 \u20316 2\u36913 \u21069 \u12300 \u35531 \u21247 \u20462 \u30473 \u27611 \u12301 \u65281 \\n\\n' +\
+        '\uc0\u9315  \u38695 \u30473 2\u36913 \u21069 \u35531 \u36991 \u20813 \u20351 \u29992 \u21547 \u37202 \u31934 \u12289 \u32654 \u30333 \u12289 \u21050 \u28608 \u25104 \u20998 \u30340 \u20445 \u39178 \u21697 \u21450 \u37291 \u32654 \u38647 \u23556 \u12290 \u35531 \u27880 \u37325 \u20445 \u28629 \u21644 \u30382 \u33178 \u31337 \u23450 \u65281 \\n\\n' +\
+        '\uc0\u9316  \u26366 \u22312 \u20182 \u24215 \u25805 \u20316 \u36942 \u30473 \u37096 \u32011 \u32353 \u27544 \u30041 \u24213 \u33394 \u20043 \u29376 \u27841 \u65288 \u38991 \u33394 \u23578 \u26410 \u36864 \u20094 \u28136 \u65289 \u30342 \u23660 \u12300 \u25913 \u30473 \u12301 \u65292 \u20729 \u20301 \u21478 \u35336 \\n\\n' +\
+        '\uc0\u9317  \u35531 \u35488 \u23526 \u21578 \u30693 \u36523 \u39636 \u29376 \u27841 \u65292 \u26377 \u20197 \u19979 \u29376 \u27841 \u32773  \u22914 \u23381 \u23142 \u12289 \u24739 \u26377 \u31958 \u23615 \u30149 \u12289 \u24515 \u33247 \u30142 \u30149 \u12289 \u34880 \u28082 \u20659 \u26579 \u30142 \u30149 \u12289 \u30116 \u30165 \u39636 \u36074 \u12289 \u34870 \u35910 \u30151 \u12289 \u30382 \u33178 \u30149 \u12289 \u22196 \u37325 \u36942 \u25935 \u32908 \u33178 \u12289 \u23436 \u32654 \u20027 \u32681 \u12289 \u26131 \u28966 \u24942 \u25812 \u24515 \u32773 \u65292 \u35531 \u21247 \u38928 \u32004 \u65281 \\n\\n' +\
+        '\uc0\u12300 \u28858 \u32173 \u35703 \u38617 \u26041 \u27402 \u30410  \u35531 \u35443 \u38321 \u20197 \u19978 \u20107 \u38917 \u12301 \\n' +\
+        '\uc0\u30906 \u35469 \u24460 \u21363 \u21487 \u22635 \u23531 \u38928 \u32004 \u34920 \u26684 \u65292 \u38928 \u32004 \u25104 \u21151 \u35222 \u28858 \u12300 \u23436 \u20840 \u21516 \u24847 \u36981 \u23432 \u12301 \u26412 \u24037 \u20316 \u23460 \u35215 \u31684 ',\
+      mainItems: [\
+        \{ id: 'eyebrow_full', name: '\uc0\u21322 \u27704 \u20037 \u38695 \u30473 \u65288 \u36104 3\u20491 \u26376 \u20839 \u35036 \u33394 1\u27425 \u65289 ', price: 4500, duration: 210 \},\
+        \{ id: 'eyebrow_touchup_1y', name: '\uc0\u33290 \u23458 \u35036 \u33394 \u65288 \u19968 \u24180 \u20839 \u65289 ', price: 2250, duration: 120 \},\
+        \{ id: 'eyebrow_touchup_over1y', name: '\uc0\u33290 \u23458 \u35036 \u33394 \u65288 \u19968 \u24180 \u20197 \u19978 \u65292 \u35222 \u28858 \u37325 \u26032 \u38695 \u30473 \u65292 \u38695 \u30473 \u26178 \u20729 88\u25240 \u65289 ', price: null, priceFormula: \{ baseItemId: 'eyebrow_full', multiplier: 0.88 \}, priceNote: '\u21322 \u27704 \u20037 \u38695 \u30473 \u29694 \u34892 \u37329 \u38989 88\u25240 \u65292 \u23526 \u38555 \u20197 \u29694 \u22580 \u30906 \u35469 \u28858 \u28310 ', duration: 210 \},\
+        \{ id: 'eyebrow_light_single', name: '\uc0\u28961 \u21109 \u28129 \u33394 \u65293 \u21934 \u27425 ', price: 1200, duration: 60 \},\
+        \{ id: 'eyebrow_light_unlimited', name: '\uc0\u28961 \u21109 \u28129 \u33394 \u65293 \u21253 \u22530 \u19981 \u38480 \u27425 \u25976 ', price: 4500, duration: 60 \},\
+      ],\
+      addonGroups: [\
+        \{\
+          groupId: 'oldbase',\
+          label: '\uc0\u33290 \u24213 \u35519 \u25972 \u36027 ',\
+          displayAs: 'buttons',\
+          options: [\
+            \{ id: 'none', name: '\uc0\u28961 ', price: 0 \},\
+            \{ id: 'oldbase_yes', name: '\uc0\u33290 \u24213 \u35519 \u25972 \u36027  \u65291 NTD.500', price: 500 \},\
+          ],\
+        \},\
+        \{\
+          groupId: 'mens',\
+          label: '\uc0\u30007 \u22763 \u30473 ',\
+          displayAs: 'buttons',\
+          options: [\
+            \{ id: 'none', name: '\uc0\u28961 ', price: 0 \},\
+            \{ id: 'mens_yes', name: '\uc0\u30007 \u22763 \u30473  \u65291 NTD.500', price: 500 \},\
+          ],\
+        \},\
+      ],\
+      discountMode: 'multi', // \uc0\u21487 \u30090 \u21152 \u65292 \u30059 \u38754 \u29992  checkbox \u35079 \u36984 \
+      discounts: [\
+        \{ id: 'ig', name: 'IG\uc0\u36861 \u36452 \u65291 \u20998 \u20139 /\u27161 \u35352 ', price: -200 \},\
+        \{ id: 'birthday', name: '\uc0\u30070 \u26376 \u22781 \u26143 ', price: -200 \},\
+        \{ id: 'group', name: '\uc0\u20841 \u20154 \u20197 \u19978 \u21516 \u34892 \u65288 \u27599 \u20154 \u65289 ', price: -200, requiresCompanionPhone: true \},\
+        \{ id: 'redo', name: '\uc0\u32396 \u20570 \u38695 \u30473 \u20778 \u24800 \u65288 \u20677 \u38480 \u28961 \u21109 \u28129 \u33394 \u65289 ', price: -300, restrictedToMainItems: ['eyebrow_light_single', 'eyebrow_light_unlimited'] \},\
+      ],\
+    \},\
+    \{\
+      id: 'eyelash',\
+      name: '\uc0\u30571 \u27611 \u38917 \u30446 ',\
+      noticeTitle: '\uc0\u30571 \u27611 \u38917 \u30446  \u34899 \u21069 \u27880 \u24847 \u20107 \u38917 ',\
+      noticeText:\
+        '\uc0\u30571 \u27611 \u31649 \u29702 \u65306 \u33258 \u36523 \u30571 \u27611 \u25458 \u32761 \u12289 \u22609 \u22411 \u65292 \u32173 \u25345 \u24230 \u32004 6~8\u36913 \u65288 \u35222 \u20195 \u35613 \u36895 \u24230 \u65289 \\n' +\
+        '\uc0\u26085 \u24335 \u23233 \u25509 \u65306 \u30495 \u30571 \u27611 \u19978 \u23233 \u25509 \u20551 \u30571 \u27611 \u65292 \u32173 \u25345 \u24230 \u32004 3~4\u36913 \u65288 \u35222 \u20195 \u35613 \u36895 \u24230 \u21450 \u20491 \u20154 \u20445 \u39178 \u29031 \u35703 \u26377 \u25152 \u19981 \u21516 \u65289 \\n' +\
+        '\uc0\u65288 \u30495 \u30340 \u29494 \u35947 \u19981 \u30693 \u36947 \u36984 \u20160 \u40636 \u25105 \u20497 \u21487 \u20197 \u29694 \u22580 \u35342 \u35542 \u65289 \\n\\n' +\
+        '\uc0\u9312  \u25805 \u20316 \u26178 \u38263 \u32004 1~1.5\u23567 \u26178 \u65292 \u35531 \u38928 \u30041 2\u23567 \u26178 \u26178 \u38291 \\n\\n' +\
+        '\uc0\u9313  \u21368 \u30571 /\u21152 \u36092 \u19979 \u30571 \u27611 \u65292 \u35531 \u25552 \u21069 \u21578 \u30693 \u65292 \u38656 \u22810 \u38928 \u30041 \u21322 \u23567 \u26178 \\n\\n' +\
+        '\uc0\u9314  3\u20491 \u26376 \u20839 \u20570 \u36942 \u30571 \u27611 \u31649 \u29702 \u12289 \u35282 \u34507 \u30333 \u12289 \u32011 \u32353 \u30524 \u32218 \u28961 \u27861 \u26045 \u20316 \u26085 \u24335 \u23233 \u25509 \\n\\n' +\
+        '\uc0\u9315  \u30524 \u30555 \u12289 \u30524 \u30382 \u30332 \u28814 \u20013 \u25110 \u38263 \u37341 \u30524 \u30342 \u28961 \u27861 \u26045 \u20316 \\n\\n' +\
+        '\uc0\u9316  \u19968 \u20491 \u26376 \u20839 \u20570 \u36942 \u30524 \u37096 \u21608 \u22285 \u37291 \u32654 \u25163 \u34899 \u25110 \u21322 \u24180 \u20839 \u20570 \u36942 \u30524 \u37096 \u25163 \u34899 \u12289 \u38617 \u30524 \u30382 \u25163 \u34899 \u12289 \u36817 \u35222 \u25163 \u34899 \u24674 \u24489 \u20013 \u25110 \u32011 \u32353 \u20663 \u21475 \u24674 \u24489 \u20013 \u30342 \u28961 \u27861 \u26045 \u20316 \\n\\n' +\
+        '\uc0\u9317  \u23381 \u23229 \u21674 \u35531 \u30906 \u35469 \u26159 \u21542 \u21487 \u20037 \u36538 \u65288 \u24037 \u20316 \u23460 \u20351 \u29992 \u24179 \u36538 \u30340 \u32654 \u23481 \u24202 \u65289 \\n\\n' +\
+        '\uc0\u9318  \u25805 \u20316 \u30070 \u22825 \u12300 \u35531 \u21247 \u12301 \u21270 \u30524 \u22941 \u12289 \u22846 \u30571 \u27611 \u12289 \u30571 \u27611 \u33167 \u65292 \u20854 \u23427 \u28129 \u22941 \u21487 \u65292 \u22914 \u26524 \u32080 \u26463 \u24460 \u35201 \u28418 \u20142 \u20986 \u38272 \u32004 \u26371 \u30340 \u27700 \u27700 \u21487 \u20197 \u24118 \u21270 \u22941 \u21697 \u35036 \u22941 \\n\\n' +\
+        '\uc0\u9319  \u25805 \u20316 \u36942 \u31243 \u19981 \u21487 \u30556 \u30524 \u21450 \u20351 \u29992 \u25163 \u27231 \\n\\n' +\
+        '\uc0\u9320  \u25805 \u20316 \u21069 \u19968 \u22825 \u35531 \u35731 \u30524 \u30555 \u36275 \u22816 \u20241 \u24687 \u30561 \u39165 \u65281 \u36991 \u20813 \u30524 \u30555 \u25935 \u24863 \u65292 \u30070 \u22825 \u21487 \u37197 \u25140 \u26085 \u25291 \u38577 \u24418 \u30524 \u37857 \u65292 \u19981 \u24314 \u35696 \u25140 \u38263 \u25140 \u22411 \u38577 \u24418 \u30524 \u37857 \\n\\n' +\
+        '\uc0\u12300 \u28858 \u32173 \u35703 \u38617 \u26041 \u27402 \u30410  \u35531 \u35443 \u38321 \u20197 \u19978 \u20107 \u38917 \u12301 \\n' +\
+        '\uc0\u30906 \u35469 \u24460 \u21363 \u21487 \u22635 \u23531 \u38928 \u32004 \u34920 \u26684 \u65292 \u38928 \u32004 \u25104 \u21151 \u35222 \u28858 \u12300 \u23436 \u20840 \u21516 \u24847 \u36981 \u23432 \u12301 \u26412 \u24037 \u20316 \u23460 \u35215 \u31684 ',\
+      mainItems: [\
+        \{ id: 'lash_curl', name: '\uc0\u19978 \u30571 \u27611 \u25458 \u32761 ', price: 799, duration: 60 \},\
+        \{ id: 'lash_100', name: '\uc0\u26085 \u24335 \u21934 \u26681 \u23233 \u25509 \u65293 \u19978 \u30571 \u27611 100\u26412 ', price: 790, duration: 90 \},\
+        \{ id: 'lash_120', name: '\uc0\u26085 \u24335 \u21934 \u26681 \u23233 \u25509 \u65293 \u19978 \u30571 \u27611 120\u26412 ', price: 890, duration: 105 \},\
+        \{ id: 'lash_140', name: '\uc0\u26085 \u24335 \u21934 \u26681 \u23233 \u25509 \u65293 \u19978 \u30571 \u27611 140\u26412 ', price: 990, duration: 120 \},\
+        \{ id: 'lash_160', name: '\uc0\u26085 \u24335 \u21934 \u26681 \u23233 \u25509 \u65293 \u19978 \u30571 \u27611 160\u26412 ', price: 1090, duration: 135 \},\
+        \{ id: 'lash_remove_only', name: '\uc0\u32020 \u21368 \u30571 \u19981 \u32396 \u25509 ', price: 300, duration: 30 \},\
+        // \uc0\u20197 \u19979 \u20841 \u38917 \u21482 \u32102 \u12300 \u25105 \u35201 \u35036 \u30571 \u12301 \u23560 \u29992 \u27969 \u31243 \u20351 \u29992 \u65292 \u19968 \u33324 \u38928 \u32004 \u34920 \u21934 \u30340 \u20027 \u35201 \u38917 \u30446 \u19979 \u25289 \u19981 \u26371 \u39023 \u31034 \u65288 \u35211  refillOnly \u27161 \u35352 \u65289 \
+        \{ id: 'lash_refill_2w', name: '2\uc0\u36913 \u20839 \u35036 \u30571 ', price: null, priceNote: '\u20381 \u19978 \u27425 \u28040 \u36027 \u37329 \u38989 5\u25240 \u35336 \u31639 \u65292 \u29694 \u22580 \u30906 \u35469 ', duration: 60, refillOnly: true, discountRate: 0.5 \},\
+        \{ id: 'lash_refill_3w', name: '3\uc0\u36913 \u20839 \u35036 \u30571 ', price: null, priceNote: '\u20381 \u19978 \u27425 \u28040 \u36027 \u37329 \u38989 8\u25240 \u35336 \u31639 \u65292 \u29694 \u22580 \u30906 \u35469 ', duration: 90, refillOnly: true, discountRate: 0.8 \},\
+      ],\
+      addonGroups: [\
+        \{\
+          groupId: 'lowlash_curl',\
+          label: '\uc0\u21152 \u36092 \u19979 \u30571 \u27611 \u65288 \u30571 \u27611 \u25458 \u32761 \u36969 \u29992 \u65289 ',\
+          options: [\
+            \{ id: 'none', name: '\uc0\u28961 ', price: 0 \},\
+            \{ id: 'low_curl_yes', name: '\uc0\u21152 \u36092 \u19979 \u30571 \u27611  \u65291 NTD.200', price: 200 \},\
+          ],\
+        \},\
+        \{\
+          groupId: 'lowlash_extension',\
+          label: '\uc0\u21152 \u36092 \u19979 \u30571 \u27611 \u65288 \u26085 \u24335 \u23233 \u25509 \u36969 \u29992 \u65289 ',\
+          options: [\
+            \{ id: 'none', name: '\uc0\u28961 ', price: 0 \},\
+            \{ id: 'low_20', name: '20\uc0\u26412  \u65291 NTD.150', price: 150 \},\
+            \{ id: 'low_30', name: '30\uc0\u26412  \u65291 NTD.225', price: 225 \},\
+          ],\
+        \},\
+        \{\
+          groupId: 'color',\
+          label: '\uc0\u24425 \u30571 \u21152 \u36092 ',\
+          options: [\
+            \{ id: 'none', name: '\uc0\u28961 ', price: 0 \},\
+            \{ id: 'color_partial', name: '\uc0\u26837 \u33394 /\u23616 \u37096 \u24425 \u30571  \u65291 NTD.100', price: 100 \},\
+            \{ id: 'color_full', name: '\uc0\u20840 \u30524 \u24425 \u30571 /\u30333 \u33394  \u65291 NTD.200', price: 200 \},\
+          ],\
+        \},\
+        \{\
+          groupId: 'refill',\
+          label: '\uc0\u26159 \u21542 \u38656 \u35201 \u21368 \u30571 \u65311 ',\
+          options: [\
+            \{ id: 'none', name: '\uc0\u28961 \u38656 \u21368 \u30571 ', price: 0 \},\
+            \{ id: 'refill_here_free', name: '\uc0\u26412 \u24215 \u21368 \u38500 \u32396 \u25509 \u65288 \u20813 \u36027 \u65289 ', price: 0 \},\
+            \{ id: 'refill_other', name: '\uc0\u20182 \u24215 \u21368 \u38500 \u32396 \u25509 \u65288 \u65291 NTD.100~200\u65289 ', price: null, priceNote: '\u38656 \u29694 \u22580 \u35413 \u20272 \u23526 \u38555 \u21152 \u20729 ' \},\
+          ],\
+        \},\
+      ],\
+      discountMode: 'single', // \uc0\u25240 \u25187 \u20677 \u25799 \u19968 \u65292 \u30059 \u38754 \u29992 \u21934 \u36984 \u19979 \u25289 \
+      discounts: [\
+        \{ id: 'ig', name: 'IG/Threads\uc0\u36861 \u36452 \u65291 \u20998 \u20139 \u27161 \u35352 ', price: -100 \},\
+        \{ id: 'referral', name: '\uc0\u33290 \u24118 \u26032 \u65288 \u38656 \u20633 \u35387 \u20171 \u32057 \u20154 \u65289 ', price: -100, requiresReferrerPhone: true \},\
+        \{ id: 'birthday', name: '\uc0\u30070 \u26376 \u22781 \u26143 ', price: -100 \},\
+      ],\
+    \},\
+  ],\
+\
+  // ----------------------------------------------------------\
+  // \uc0\u24037 \u20316 \u23460 \u32317 \u38920 \u30693 \u65288 \u22312 \u23458 \u20154 \u36984 \u25799 \u20219 \u20309 \u26381 \u21209 \u38917 \u30446 \u12300 \u20043 \u21069 \u12301 \u23601 \u35201 \u39023 \u31034 \u20006 \u21246 \u36984 \u21516 \u24847 \u65289 \
+  // ----------------------------------------------------------\
+  STUDIO_NOTICE: \{\
+    title: '\uc0\u24037 \u20316 \u23460 \u38928 \u32004 \u38920 \u30693 ',\
+    text:\
+      '\uc0\u9825  \u23621 \u23478 \u24037 \u20316 \u23460 \u65372 \u29544 \u31435 \u31354 \u38291 \u65292 \u20837 \u20839 \u26377 \u35987 \u21674 \\n\\n' +\
+      '\uc0\u9825  \u24037 \u20316 \u23460 \u31354 \u38291 \u26377 \u38480 \u65292 \u26283 \u19981 \u38283 \u25918 \u25884 \u20276 \\n\\n' +\
+      '\uc0\u9825  \u20184 \u27454 \u26041 \u24335 \u65306 \u29694 \u37329 \u12289 \u36681 \u24115 \\n\\n' +\
+      '\uc0\u9825  \u25505 \u38928 \u32004 \u21046 \u65292 \u30070 \u26085 \u31354 \u27284 \u35531 \u30452 \u25509 \u31169 \u35338 Line\u35426 \u21839 \\n\\n' +\
+      '\uc0\u9825  \u26032 \u23458 \u38928 \u32004 \u38656 \u20184 \u23450 \u37329 \u65292 \u23450 \u37329 \u23559 \u26044 \u26045 \u20316 \u30070 \u22825 \u20840 \u25976 \u25240 \u25269 \u65281 \\n' +\
+      '\uc0\u12288 \u65288 \u30473 \u27611 \u38917 \u30446 \u65306 NTD.1000\u12289 \u30571 \u27611 \u38917 \u30446 \u65306 NTD.500\u65289 \\n\\n' +\
+      '\uc0\u9825  \u36978 \u21040 15\u20998 \u37912 \u20197 \u19978 \u65292 \u23559 \u35222 \u24773 \u27841 \u21462 \u28040 \u30070 \u27425 \u38928 \u32004 \\n' +\
+      '\uc0\u12288 ***\u36978 \u21040 \u32773 \u36027 \u29992 \u23559 \u28961 \u27861 \u20351 \u29992 \u20219 \u20309 \u20778 \u24800 \u65292 \u30342 \u20197 \u21407 \u20729 \u35336 \u31639 ***\\n\\n' +\
+      '\uc0\u9825  \u21462 \u28040 or\u25913 \u26399 \u38920 \u25552 \u21069 \u12300 3\u22825 \u12301 \u21578 \u30693 \u65292 \u25913 \u26399 \u20677 \u38480 \u12300 1\u27425 \u12301 \\n' +\
+      '\uc0\u12288 \u12300 \u26032 \u23458 \u12301 \u28961 \u25925 \u26410 \u21040 \u12289 \u26410 \u20381 \u35215 \u23450 \u26178 \u38291 \u25913 \u26399 \u12289 \u36978 \u21040 15\u20998 \u37912 \u20197 \u19978 \u65292 \\n' +\
+      '\uc0\u12288 \u8594  \u23450 \u37329 \u24661 \u19981 \u36864 \u36996 \u20134 \u19981 \u27839 \u29992 \\n' +\
+      '\uc0\u12288 \u12300 \u33290 \u23458 \u12301 \u28961 \u25925 \u26410 \u21040 \u12289 \u26410 \u20381 \u35215 \u23450 \u26178 \u38291 \u25913 \u26399 \u12289 \u36978 \u21040 15\u20998 \u37912 \u20197 \u19978 \u65292 \\n' +\
+      '\uc0\u12288 \u8594  \u38656 \u25903 \u20184 \u31354 \u27284 \u35036 \u36028 \u36027 \u65292 \u19988 \u19979 \u27425 \u38928 \u32004 \u38656 \u25903 \u20184 \u23450 \u37329 \\n' +\
+      '\uc0\u12288 \u65288 \u31354 \u27284 \u35036 \u36028 \u36027  \u8594  \u30473 \u27611 \u38917 \u30446 \u65306 NTD.1000\u12289 \u30571 \u27611 \u38917 \u30446 \u65306 NTD.500\u65289 \\n\\n' +\
+      '\uc0\u9825  \u21462 \u28040 \u38928 \u32004  \u23450 \u37329 \u21487 \u20445 \u30041 30\u26085 \\n\\n' +\
+      '\uc0\u9825  \u35531 \u35488 \u23526 \u21578 \u30693 \u36523 \u39636 \u29376 \u27841 \u65292 \u20006 \u35443 \u38321 \u21508 \u38917 \u30446 \u27880 \u24847 \u20107 \u38917 \u21450 \u38920 \u30693 \\n\\n' +\
+      '\uc0\u12300 \u28858 \u32173 \u35703 \u38617 \u26041 \u27402 \u30410  \u38928 \u32004 \u21069 \u35531 \u35443 \u38321 \u20197 \u19978 \u20107 \u38917 \u12301 \\n' +\
+      '\uc0\u38928 \u32004 \u25104 \u21151 \u35222 \u28858 \u12300 \u23436 \u20840 \u21516 \u24847 \u36981 \u23432 \u12301 \u26412 \u24037 \u20316 \u23460 \u35215 \u31684 \\n\\n' +\
+      '\uc0\u9825 \u24863 \u35613 \u27700 \u27700 \u20497 \u32784 \u24515 \u22320 \u35712 \u21040 \u36889 \u35041 \u9825 ',\
+  \},\
+\
+  // \uc0\u26032 \u23458 \u23450 \u37329 \u37329 \u38989 \u65288 \u20381 \u20998 \u39006  id \u23565 \u25033 \u65289 \u65292 \u36319 \u19978 \u38754 \u38920 \u30693 \u35041 \u23531 \u30340 \u37329 \u38989 \u19968 \u33268 \
+  DEPOSIT_AMOUNT: \{\
+    eyebrow: 1000,\
+    eyelash: 500,\
+  \},\
+\
+  // \uc0\u23450 \u37329 \u35201 \u22312 \u36865 \u20986 \u38928 \u32004 \u24460 \u24190 \u23567 \u26178 \u20839 \u23436 \u25104 \u21295 \u27454 \
+  DEPOSIT_DEADLINE_HOURS: 24,\
+\
+  // \uc0\u21462 \u28040 \u25110 \u25913 \u26399 \u25919 \u31574 \u65306 \u38656 \u25552 \u21069 \u24190 \u22825 \u21578 \u30693 \u12289 \u25913 \u26399 \u26368 \u22810 \u24190 \u27425 \u12289 \u21462 \u28040 \u24460 \u23450 \u37329 \u21487 \u20445 \u30041 \u24190 \u22825 \
+  CANCEL_MODIFY_MIN_DAYS: 3,\
+  MAX_MODIFY_COUNT: 1,\
+  DEPOSIT_HOLD_DAYS: 30,\
+\
+  // \uc0\u26032 \u23458 \u24471 \u30693 \u31649 \u36947 \u36984 \u38917 \u65288 \u21482 \u26377 \u31995 \u32113 \u21028 \u26039 \u26159 \u26032 \u23458 \u26178 \u25165 \u26371 \u21839 \u36889 \u19968 \u38988 \u65289 \
+  REFERRAL_SOURCES: ['Instagram', 'Threads', '\uc0\u26379 \u21451 \u20171 \u32057 ', '\u20854 \u20182 '],\
+  // \uc0\u36984 \u20102 \u36889 \u20123 \u36984 \u38917 \u26178 \u65292 \u21069 \u31471 \u26371 \u22810 \u36339 \u20986 \u19968 \u20491 \u36984 \u22635 \u30340 \u25991 \u23383 \u26694 \u65288 \u20363 \u22914 \u20171 \u32057 \u20154 \u22995 \u21517 \u65289 \
+  REFERRAL_SOURCES_WITH_DETAIL: ['\uc0\u26379 \u21451 \u20171 \u32057 ', '\u20854 \u20182 '],\
+\
+  // \uc0\u21295 \u27454 \u36039 \u35338  \'97\'97 \u35531 \u21209 \u24517 \u22635 \u20837 \u30495 \u23526 \u30340 \u25910 \u27454 \u24115 \u25142 \u36039 \u35338 \u65292 \u36889 \u35041 \u20808 \u25918 \u38928 \u30041 \u25991 \u23383 \
+  BANK_INFO: \{\
+    bankName: '\uc0\u22283 \u27888 \u19990 \u33775 \u21830 \u26989 \u37504 \u34892 ',\
+    bankCode: '013',\
+    account: '064700028508',\
+  \},\
+\
+  DISCOUNT_USAGE_SHEET_NAME: '\uc0\u20778 \u24800 \u20351 \u29992 \u32000 \u37636 ',\
+\
+  // ---- LINE Messaging API \uc0\u35373 \u23450  ----\
+  // \uc0\u36889 \u20841 \u20491 \u26159 \u23494 \u38000 \u65292 \u35531 \u33258 \u24049 \u24478  LINE Official Account Manager \u8594 \u35373 \u23450 \u8594 Messaging API \u21462 \u24471 \u24460 \u22635 \u20837 \u65292 \u19981 \u35201 \u20132 \u32102 \u20219 \u20309 \u20154 \
+  LINE_CHANNEL_ACCESS_TOKEN: '\uc0\u35531 \u22635 \u20837 \u24744 \u30340  Channel access token',\
+  LINE_CHANNEL_SECRET: '\uc0\u35531 \u22635 \u20837 \u24744 \u30340  Channel secret',\
+  LINE_BINDING_SHEET_NAME: 'LINE\uc0\u32129 \u23450 ',\
+  LINE_ADD_FRIEND_URL: 'https://line.me/R/ti/p/@542gaexu',\
+\
+  // \uc0\u20778 \u24800 \u21048 \u35215 \u21063 \u65306 \u21738 \u20123 \u20778 \u24800 \u19981 \u21463 \u12300 \u27704 \u20037 \u38480 \u29992 \u19968 \u27425 \u12301 \u35215 \u21063 \u38480 \u21046 \
+  // birthday\uc0\u65306 \u27599  365 \u22825 \u21487 \u20877 \u29992 \u19968 \u27425 \u65288 \u21478 \u22806 \u29992 \u29983 \u26085 \u26376 \u20221 \u21028 \u26039 \u26159 \u21542 \u22312 \u27284 \u26399 \u20839 \u65289 \
+  // \uc0\u38656 \u35201 \u22635 \u20171 \u32057 \u20154 \u38651 \u35441 \u30340 \u20778 \u24800 \u65288 \u29992  discount.requiresReferrerPhone \u27161 \u35352 \u21028 \u26039 \u65289 \u65306 \u19981 \u38480 \u27425 \u25976 \u65292 \u22240 \u28858 \u27599 \u20171 \u32057 \u19968 \u20301 \u26032 \u26379 \u21451 \u37117 \u33021 \u21508 \u33258 \u25240 \u25269 \u19968 \u27425 \
+  BIRTHDAY_DISCOUNT_ID: 'birthday',\
+  BIRTHDAY_RESET_DAYS: 365,\
+\
+  // \uc0\u20171 \u32057 \u20154 \u20778 \u24800 \u21048 \u26377 \u25928 \u26399 \u38480 \u65306 \u24478 \u34987 \u20171 \u32057 \u20154 \u12300 \u23436 \u25104 \u38917 \u30446 \u37027 \u22825 \u12301 \u36215 \u31639 \u24190 \u20491 \u26376 \u20839 \
+  REFERRAL_CREDIT_VALID_MONTHS: 2,\
+\
+  // \uc0\u35036 \u30571 \u38928 \u32004 \u35215 \u21063 \u65306 \u22810 \u23569 \u22825 \u20839 \u20801 \u35377 \u30332 \u36215 \u35036 \u30571 \u12289 \u20197 \u21450 \u21508 \u26178 \u25928 \u23565 \u25033 \u30340 \u25240 \u25187 \
+  TOUCHUP_MIN_DAYS_SINCE: 1,\
+  TOUCHUP_MAX_DAYS_SINCE: 21,\
+  TOUCHUP_TIER_2W_MAX_DAYS: 14, // \uc0\u26381 \u21209 \u23436 \u25104 \u24460  <=14 \u22825 \u65292 \u36969 \u29992  2 \u36913 \u20839 \u35036 \u30571 \u65288 5\u25240 \u65289 \
+\};\
+\
+// ------------------------------------------------------------\
+// 2. \uc0\u32178 \u38913 \u36914 \u20837 \u40670 \
+// ------------------------------------------------------------\
+function doGet(e) \{\
+  const page = (e && e.parameter && e.parameter.page) || 'book';\
+  const templateName = page === 'feedback' ? 'feedback' : (page === 'cancel' ? 'cancel' : 'index');\
+  const tpl = HtmlService.createTemplateFromFile(templateName);\
+  tpl.cancelUrl = ScriptApp.getService().getUrl() + '?page=cancel';\
+  tpl.bookUrl = ScriptApp.getService().getUrl();\
+  tpl.eventId = (e && e.parameter && e.parameter.id) || '';\
+  tpl.presetCategory = (e && e.parameter && e.parameter.category) || '';\
+  const titles = \{ cancel: '\uc0\u26597 \u35426 \u65295 \u21462 \u28040 \u65295 \u20462 \u25913 \u38928 \u32004 ', feedback: '\u26381 \u21209 \u21453 \u39243 ' \};\
+  return tpl\
+    .evaluate()\
+    .setTitle(titles[page] || '\uc0\u32218 \u19978 \u38928 \u32004 ')\
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');\
+\}\
+\
+// ------------------------------------------------------------\
+// 3. \uc0\u25552 \u20379 \u21069 \u31471 \u35712 \u21462 \u35373 \u23450 \
+// ------------------------------------------------------------\
+function getBookingConfig() \{\
+  return \{\
+    categories: getCategoriesWithResolvedPrices(),\
+    bookingWindowDays: CONFIG.BOOKING_WINDOW_DAYS,\
+    studioNotice: CONFIG.STUDIO_NOTICE,\
+    depositAmount: CONFIG.DEPOSIT_AMOUNT,\
+    depositDeadlineHours: CONFIG.DEPOSIT_DEADLINE_HOURS,\
+    bankInfo: CONFIG.BANK_INFO,\
+    cancelModifyMinDays: CONFIG.CANCEL_MODIFY_MIN_DAYS,\
+    maxModifyCount: CONFIG.MAX_MODIFY_COUNT,\
+    depositHoldDays: CONFIG.DEPOSIT_HOLD_DAYS,\
+    referralSources: CONFIG.REFERRAL_SOURCES,\
+    referralSourcesWithDetail: CONFIG.REFERRAL_SOURCES_WITH_DETAIL,\
+    lineAddFriendUrl: CONFIG.LINE_ADD_FRIEND_URL,\
+  \};\
+\}\
+\
+// \uc0\u32102 \u21069 \u31471 \u29992 \u30340 \u20998 \u39006 \u36039 \u26009 \u65306 \u25226 \u26377  priceFormula \u30340 \u38917 \u30446 \u65288 \u20363 \u22914 \u33290 \u23458 \u35036 \u33394 \u21443 \u29031 \u21322 \u27704 \u20037 \u38695 \u30473 \u25171 \u25240 \u65289 \
+// \uc0\u20808 \u31639 \u20986 \u23526 \u38555 \u37329 \u38989 \u22622 \u36914  price\u65292 \u21069 \u31471 \u23601 \u19981 \u29992 \u33258 \u24049 \u34389 \u29702 \u25442 \u31639 \u37007 \u36655 \
+function getCategoriesWithResolvedPrices() \{\
+  return CONFIG.CATEGORIES.map(cat => \{\
+    const mainItems = cat.mainItems.map(item => \{\
+      if (item.priceFormula) \{\
+        const resolved = resolveMainItemPrice(cat, item);\
+        if (resolved !== null) return Object.assign(\{\}, item, \{ price: resolved \});\
+      \}\
+      return item;\
+    \});\
+    return Object.assign(\{\}, cat, \{ mainItems: mainItems \});\
+  \});\
+\}\
+\
+// ------------------------------------------------------------\
+// 4. \uc0\u25214 \u20986 \u20027 \u35201 \u38917 \u30446 \u29289 \u20214 \u65288 \u36328 \u20998 \u39006 \u25628 \u23563 \u65289 \
+// ------------------------------------------------------------\
+function findMainItem(mainItemId) \{\
+  for (const cat of CONFIG.CATEGORIES) \{\
+    const item = cat.mainItems.find(m => m.id === mainItemId);\
+    if (item) return \{ category: cat, item: item \};\
+  \}\
+  return null;\
+\}\
+\
+// ------------------------------------------------------------\
+// 5. \uc0\u26597 \u35426 \u21487 \u38928 \u32004 \u26178 \u27573 \
+//    \uc0\u26178 \u27573 \u20358 \u28304 \u25913 \u25104 \u12300 \u29151 \u26989 \u26178 \u27573 \u35373 \u23450 \u12301 \u35430 \u31639 \u34920 \u65292 \u30001 \u24215 \u23478 \u33258 \u24049 \u27599 \u22825 \u25163 \u21205 \u22635 \u26178 \u27573 \
+//    \uc0\u65288 \u22240 \u28858 \u27599 \u22825 \u29151 \u26989 \u26178 \u38291 \u12289 \u20844 \u20241 \u37117 \u19981 \u22266 \u23450 \u65292 \u19981 \u33021 \u29992 \u22266 \u23450 \u20844 \u24335 \u33258 \u21205 \u29986 \u29983 \u65289 \
+//    \uc0\u22238 \u20659 \u26684 \u24335 \u65306 \{ status: 'unset' | 'closed' | 'ok', times: [...] \}\
+//    - unset\uc0\u65306 \u36889 \u22825 \u23436 \u20840 \u27794 \u26377 \u22312 \u35430 \u31639 \u34920 \u24314 \u31435 \u32000 \u37636  \u8594  \u20195 \u34920 \u24215 \u23478 \u36996 \u27794 \u25490 \u29677 \
+//    - closed\uc0\u65306 \u36889 \u22825 \u26377 \u24314 \u31435 \u32000 \u37636 \u65292 \u20294 \u26178 \u27573 \u27396 \u20301 \u26159 \u31354 \u30340  \u8594  \u20195 \u34920 \u20844 \u20241 /\u20241 \u24687 \
+//    - ok\uc0\u65306 \u27491 \u24120 \u22238 \u20659 \u21487 \u38928 \u32004 \u30340 \u26178 \u27573 \u38499 \u21015 \u65288 \u24050 \u25187 \u25481 \u34987 \u38928 \u32004 \u12289 \u24050 \u36942 \u26399 \u30340 \u26178 \u27573 \u65289 \
+// ------------------------------------------------------------\
+// \uc0\u19968 \u27425 \u26597 \u35426 \u12300 \u26576 \u24180 \u26576 \u26376 \u12301 \u25972 \u20491 \u26376 \u30340 \u31354 \u27284 \u27010 \u27841 \u65292 \u32102 \u21069 \u31471 \u26376 \u26310 \u26684 \u23376 \u20351 \u29992 \
+// \uc0\u22238 \u20659 \u65306 \{ year, month, firstWeekday, days: [\{ date, day, weekday, status, slotCount \}, ...] \}\
+function getAvailabilityOverviewForMonth(mainItemId, year, month) \{\
+  const found = findMainItem(mainItemId);\
+  if (!found) throw new Error('\uc0\u25214 \u19981 \u21040 \u36889 \u20491 \u26381 \u21209 \u38917 \u30446 ');\
+\
+  const firstDay = new Date(year, month - 1, 1);\
+  const daysInMonth = new Date(year, month, 0).getDate();\
+\
+  const days = [];\
+  for (let day = 1; day <= daysInMonth; day++) \{\
+    const d = new Date(year, month - 1, day);\
+    const dateStr = Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd');\
+    const res = getAvailableSlots(dateStr, mainItemId);\
+    days.push(\{\
+      date: dateStr,\
+      day: day,\
+      weekday: d.getDay(),\
+      status: res.status,\
+      slotCount: (res.times || []).length,\
+    \});\
+  \}\
+\
+  return \{ year: year, month: month, firstWeekday: firstDay.getDay(), days: days \};\
+\}\
+\
+// \uc0\u26597 \u35426 \u26576 \u20491 \u26085 \u26399 \u21312 \u38291 \u20839 \u27599 \u19968 \u22825 \u30340 \u31354 \u27284 \u27010 \u27841 \u65292 \u32102 \u21069 \u31471 \u12300 \u26376 \u26310 \u26684 \u23376 \u12301 \u20351 \u29992 \u65292 \u19968 \u27425 \u26597 \u23436 \u19968 \u25972 \u20491 \u26376 \
+// \uc0\u22238 \u20659 \u65306 [\{ date, weekday, status: 'unset'|'closed'|'ok', slotCount \}, ...]\
+function getAvailabilityForRange(mainItemId, startDateStr, endDateStr, excludeEventId) \{\
+  const found = findMainItem(mainItemId);\
+  if (!found) throw new Error('\uc0\u25214 \u19981 \u21040 \u36889 \u20491 \u26381 \u21209 \u38917 \u30446 ');\
+\
+  const start = new Date(startDateStr + 'T00:00:00');\
+  const end = new Date(endDateStr + 'T00:00:00');\
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return [];\
+\
+  const results = [];\
+  const cursor = new Date(start);\
+  while (cursor <= end) \{\
+    const dateStr = Utilities.formatDate(cursor, Session.getScriptTimeZone(), 'yyyy-MM-dd');\
+    const res = getAvailableSlots(dateStr, mainItemId, excludeEventId);\
+    results.push(\{\
+      date: dateStr,\
+      weekday: cursor.getDay(),\
+      status: res.status,\
+      slotCount: (res.times || []).length,\
+    \});\
+    cursor.setDate(cursor.getDate() + 1);\
+  \}\
+  return results;\
+\}\
+\
+// \uc0\u32102 \u12300 \u20462 \u25913 \u38928 \u32004 \u12301 \u38913 \u38754 \u29992 \u65306 \u29992 \u20998 \u39006 \u21517 \u31281 \u65291 \u20027 \u35201 \u38917 \u30446 \u21517 \u31281 \u26597 \u19968 \u25972 \u20491 \u26376 \u30340 \u31354 \u27284 \u27010 \u27841 \u65292 \
+// \uc0\u20006 \u25490 \u38500 \u23458 \u20154 \u33258 \u24049 \u21407 \u26412 \u37027 \u31558 \u38928 \u32004 \u65292 \u36991 \u20813 \u33258 \u24049 \u21345 \u33258 \u24049 \
+function getAvailabilityForRangeByLabel(categoryName, mainItemName, startDateStr, endDateStr, excludeEventId) \{\
+  const found = findMainItemByLabel(categoryName, mainItemName);\
+  if (!found) return [];\
+  return getAvailabilityForRange(found.item.id, startDateStr, endDateStr, excludeEventId);\
+\}\
+\
+// \uc0\u21028 \u26039 \u26576 \u20491 \u26085 \u26399 \u26159 \u19981 \u26159 \u12300 \u26126 \u22825 \u12301 \u65288 \u20197 \u26085 \u26310 \u22825 \u28858 \u28310 \u65292 \u19981 \u26159 \u28414 \u21205 24\u23567 \u26178 \u65289 \u65292 \u26126 \u22825 \u25972 \u22825 \u19981 \u38283 \u25918 \u32218 \u19978 \u38928 \u32004 \
+function isTomorrow(date) \{\
+  const today = new Date(); today.setHours(0, 0, 0, 0);\
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);\
+  const target = new Date(date); target.setHours(0, 0, 0, 0);\
+  return target.getTime() === tomorrow.getTime();\
+\}\
+\
+function getAvailableSlots(dateStr, mainItemId, excludeEventId) \{\
+  const found = findMainItem(mainItemId);\
+  if (!found) throw new Error('\uc0\u25214 \u19981 \u21040 \u36889 \u20491 \u26381 \u21209 \u38917 \u30446 ');\
+  const duration = found.item.duration;\
+\
+  const date = new Date(dateStr + 'T00:00:00');\
+  if (isNaN(date.getTime())) throw new Error('\uc0\u26085 \u26399 \u26684 \u24335 \u37679 \u35492 ');\
+\
+  if (isTomorrow(date)) return \{ status: 'tomorrow_blocked', times: [] \};\
+\
+  const scheduled = getScheduledTimesForDate(dateStr);\
+  if (scheduled === null) return \{ status: 'unset', times: [] \};\
+  if (scheduled.length === 0) return \{ status: 'closed', times: [] \};\
+\
+  const dayStart = new Date(date);\
+  const dayEnd = new Date(date);\
+  dayEnd.setDate(dayEnd.getDate() + 1);\
+\
+  const calendar = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);\
+  let events = calendar.getEvents(dayStart, dayEnd);\
+  if (excludeEventId) events = events.filter(ev => ev.getId() !== excludeEventId);\
+\
+  const now = new Date();\
+  const earliestAllowed = new Date(now.getTime() + CONFIG.MIN_LEAD_TIME_MINUTES * 60000);\
+\
+  const availableTimes = [];\
+  scheduled.forEach(timeStr => \{\
+    const parts = timeStr.split(':').map(Number);\
+    const h = parts[0], m = parts[1] || 0;\
+    if (isNaN(h) || isNaN(m)) return;\
+    const start = new Date(date);\
+    start.setHours(h, m, 0, 0);\
+    const end = new Date(start.getTime() + duration * 60000);\
+    if (start < earliestAllowed) return;\
+    if (isSlotFree(start, end, events)) availableTimes.push(timeStr);\
+  \});\
+\
+  return \{ status: 'ok', times: availableTimes \};\
+\}\
+\
+// \uc0\u24478 \u12300 \u29151 \u26989 \u26178 \u27573 \u35373 \u23450 \u12301 \u35430 \u31639 \u34920 \u35712 \u21462 \u26576 \u19968 \u22825 \u30340 \u26178 \u27573 \u28165 \u21934 \
+// \uc0\u25214 \u19981 \u21040 \u35442 \u26085 \u26399 \u30340 \u21015  \u8594  \u22238 \u20659  null\u65288 \u20195 \u34920 \u23578 \u26410 \u25490 \u29677 \u65289 \
+// \uc0\u25214 \u21040 \u20294 \u12300 \u21487 \u38928 \u32004 \u26178 \u27573 \u12301 \u27396 \u20301 \u26159 \u31354 \u30340  \u8594  \u22238 \u20659  []\u65288 \u20195 \u34920 \u20844 \u20241 \u65289 \
+function getScheduledTimesForDate(dateStr) \{\
+  const headers = ['\uc0\u26085 \u26399 ', '\u21487 \u38928 \u32004 \u26178 \u27573 (\u36887 \u34399 \u20998 \u38548 \u65292 \u20363 \u22914  10:30,13:00,15:30)', '\u20633 \u35387 '];\
+  const sheet = getOrCreateSheet(CONFIG.SCHEDULE_SHEET_NAME, headers);\
+  const data = sheet.getDataRange().getValues();\
+\
+  for (let i = 1; i < data.length; i++) \{\
+    const rowDateStr = normalizeDateCell(data[i][0]);\
+    if (rowDateStr === dateStr) \{\
+      const timesRaw = String(data[i][1] || '').trim();\
+      if (!timesRaw) return [];\
+      return timesRaw.split(',').map(t => t.trim()).filter(Boolean);\
+    \}\
+  \}\
+  return null;\
+\}\
+\
+function normalizeDateCell(raw) \{\
+  if (raw instanceof Date) \{\
+    return Utilities.formatDate(raw, Session.getScriptTimeZone(), 'yyyy-MM-dd');\
+  \}\
+  return String(raw).trim();\
+\}\
+\
+function isSlotFree(slotStart, slotEnd, events) \{\
+  for (const ev of events) \{\
+    if (slotStart < ev.getEndTime() && slotEnd > ev.getStartTime()) return false;\
+  \}\
+  return true;\
+\}\
+\
+// ------------------------------------------------------------\
+// 6. \uc0\u36865 \u20986 \u38928 \u32004 \
+//    formData \uc0\u26684 \u24335 \u65306 \
+//    \{\
+//      name, phone, birthday, date, time, note,\
+//      categoryId, mainItemId,\
+//      addonSelections: \{ groupId: optionId, ... \},\
+//      discountSelections: ['ig','birthday', ...]  // multi \uc0\u20998 \u39006 \u26159 \u38499 \u21015 \u65292 single \u20998 \u39006 \u20063 \u32113 \u19968 \u29992 \u38499 \u21015 \u65288 \u26368 \u22810 1\u20491 \u65289 \
+//      noticeAgreed: true\
+//    \}\
+// ------------------------------------------------------------\
+// \uc0\u27298 \u26597 \u36889 \u25903 \u38651 \u35441 \u26377 \u27794 \u26377 \u23436 \u25104 LINE\u32129 \u23450 \u65288 \u29376 \u24907 \u35201 \u26159 \u12300 \u24050 \u30906 \u35469 \u12301 \u25165 \u31639 \u25976 \u65292 \u24453 \u30906 \u35469 \u20013 \u30340 \u19981 \u31639 \u65289 \
+function isPhoneBoundToLine(phone) \{\
+  const targetPhone = normalizePhoneForLookup(phone);\
+  if (!targetPhone) return false;\
+  const headers = ['LINE User ID', '\uc0\u38651 \u35441 ', '\u29376 \u24907 ', '\u32129 \u23450 \u26178 \u38291 '];\
+  const sheet = getOrCreateSheet(CONFIG.LINE_BINDING_SHEET_NAME, headers);\
+  const data = sheet.getDataRange().getValues();\
+  for (let i = 1; i < data.length; i++) \{\
+    if (normalizePhoneForLookup(data[i][1]) === targetPhone && data[i][2] === '\uc0\u24050 \u30906 \u35469 ') \{\
+      return true;\
+    \}\
+  \}\
+  return false;\
+\}\
+\
+function submitBooking(formData) \{\
+  const lock = LockService.getScriptLock();\
+  const gotLock = lock.tryLock(10000);\
+  if (!gotLock) return \{ success: false, message: '\uc0\u31995 \u32113 \u24537 \u30860 \u20013 \u65292 \u35531 \u31245 \u24460 \u20877 \u35430 \u19968 \u27425 \u12290 ' \};\
+\
+  try \{\
+    if (!formData.noticeAgreed) \{\
+      return \{ success: false, message: '\uc0\u35531 \u20808 \u38321 \u35712 \u20006 \u21246 \u36984 \u21516 \u24847 \u34899 \u21069 \u27880 \u24847 \u20107 \u38917 ' \};\
+    \}\
+    if (!formData.name || !formData.phone) \{\
+      return \{ success: false, message: '\uc0\u22995 \u21517 \u33287 \u38651 \u35441 \u28858 \u24517 \u22635 ' \};\
+    \}\
+    // \uc0\u22914 \u26524 \u26159 \u24050 \u23384 \u22312 \u30340 \u23458 \u20154 \u65292 \u21069 \u31471 \u39023 \u31034 \u30340 \u22995 \u21517 \u26159 \u36974 \u34109 \u36942 \u30340 \u65288 \u20363 \u22914 \u12300 \u26519 O\u32654 \u12301 \u65289 \u65292 \
+    // \uc0\u36889 \u35041 \u25913 \u29992 \u35430 \u31639 \u34920 \u35041 \u30495 \u23526 \u30340 \u22995 \u21517 \u65292 \u19981 \u35201 \u25226 \u36974 \u34109 \u36942 \u30340 \u25991 \u23383 \u23384 \u36914 \u26085 \u26310 \u25110 \u32000 \u37636 \
+    const existingInfo = lookupCustomerByPhone(formData.phone);\
+    if (!existingInfo.isNew && existingInfo.name) \{\
+      formData.name = existingInfo.name;\
+    \}\
+    if (!/^[\\u4e00-\\u9fa5]+$/.test(formData.name)) \{\
+      return \{ success: false, message: '\uc0\u22995 \u21517 \u35531 \u22635 \u23531 \u20013 \u25991 \u22995 \u21517 ' \};\
+    \}\
+    if (!/^[0-9]+$/.test(formData.phone)) \{\
+      return \{ success: false, message: '\uc0\u38651 \u35441 \u35531 \u21482 \u22635 \u23531 \u25976 \u23383 ' \};\
+    \}\
+    if (formData.birthday) \{\
+      const todayStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');\
+      if (formData.birthday > todayStr) \{\
+        return \{ success: false, message: '\uc0\u29983 \u26085 \u19981 \u33021 \u26159 \u26410 \u20358 \u30340 \u26085 \u26399 ' \};\
+      \}\
+    \} else \{\
+      return \{ success: false, message: '\uc0\u35531 \u22635 \u23531 \u29983 \u26085 \u65292 \u25165 \u33021 \u20139 \u26377 \u29983 \u26085 \u20778 \u24800 ' \};\
+    \}\
+\
+    const found = findMainItem(formData.mainItemId);\
+    if (!found) return \{ success: false, message: '\uc0\u26381 \u21209 \u38917 \u30446 \u37679 \u35492 ' \};\
+    const \{ category, item: mainItem \} = found;\
+\
+    // \uc0\u39511 \u35657 \u20778 \u24800 \u26159 \u21542 \u21487 \u29992 \u65288 \u38450 \u27490 \u21069 \u31471 \u34987 \u32350 \u36942 \u65292 \u24460 \u31471 \u19968 \u23450 \u35201 \u20877 \u27298 \u26597 \u19968 \u27425 \u65289 \
+    const discountSelections = formData.discountSelections || [];\
+    let referrerPhoneForCredit = ''; // \uc0\u33290 \u24118 \u26032 \u65306 \u26371 \u32047 \u31309 \u20778 \u24800 \u21048 \u32102 \u23565 \u26041 \
+    let companionPhone = ''; // \uc0\u20841 \u20154 \u21516 \u34892 \u65306 \u30070 \u22580 \u25240 \u25269 \u65292 \u19981 \u32047 \u31309 \u21048 \
+    for (const discountId of discountSelections) \{\
+      const d = category.discounts.find(x => x.id === discountId);\
+      if (!d) continue;\
+      if ((d.requiresReferrerPhone || d.requiresCompanionPhone) && !normalizePhoneForLookup(formData.referrerPhone)) \{\
+        return \{ success: false, message: `\uc0\u36984 \u25799 \u12300 $\{d.name\}\u12301 \u20778 \u24800 \u26178 \u65292 \u35531 \u22635 \u23531 \u23565 \u26041 \u38651 \u35441 ` \};\
+      \}\
+      if (d.requiresReferrerPhone) referrerPhoneForCredit = formData.referrerPhone;\
+      if (d.requiresCompanionPhone) companionPhone = formData.referrerPhone;\
+    \}\
+    const availability = getDiscountAvailability(formData.phone, category.id, mainItem.id);\
+    for (const discountId of discountSelections) \{\
+      if (availability[discountId] && !availability[discountId].available) \{\
+        return \{ success: false, message: `\uc0\u20778 \u24800 \u12300 $\{availability[discountId].name || discountId\}\u12301 \u30446 \u21069 \u28961 \u27861 \u20351 \u29992 \u65306 $\{availability[discountId].reason || '\u24050 \u20351 \u29992 \u36942 '\}` \};\
+      \}\
+    \}\
+\
+    const [h, m] = formData.time.split(':').map(Number);\
+    const start = new Date(formData.date + 'T00:00:00');\
+    start.setHours(h, m, 0, 0);\
+    const end = new Date(start.getTime() + mainItem.duration * 60000);\
+\
+    if (isTomorrow(start)) \{\
+      return \{ success: false, message: '\uc0\u26126 \u22825 \u19981 \u38283 \u25918 \u32218 \u19978 \u38928 \u32004 \u65292 \u22914 \u38656 \u38928 \u32004 \u35531 \u30452 \u25509 \u32879 \u32363 \u24215 \u23478 \u12290 ' \};\
+    \}\
+\
+    // \uc0\u20877 \u27425 \u30906 \u35469 \u26178 \u27573 \u36996 \u31354 \u33879 \
+    const calendar = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);\
+    const dayStart = new Date(start); dayStart.setHours(0, 0, 0, 0);\
+    const dayEnd = new Date(start); dayEnd.setHours(23, 59, 59, 999);\
+    const events = calendar.getEvents(dayStart, dayEnd);\
+    if (!isSlotFree(start, end, events)) \{\
+      return \{ success: false, message: '\uc0\u24456 \u25265 \u27465 \u65292 \u36889 \u20491 \u26178 \u27573 \u21083 \u21083 \u34987 \u21029 \u20154 \u38928 \u32004 \u36208 \u20102 \u65292 \u35531 \u37325 \u26032 \u36984 \u25799 \u26178 \u27573 \u12290 ' \};\
+    \}\
+\
+    // \uc0\u25972 \u29702 \u21152 \u36092 \u33287 \u20778 \u24800 \u26126 \u32048 \u12289 \u35336 \u31639 \u37329 \u38989 \
+    const breakdown = buildBreakdown(category, mainItem, formData.addonSelections, formData.discountSelections);\
+\
+    const serviceLabel = `$\{category.name\}/$\{mainItem.name\}`;\
+    // \uc0\u20808 \u21028 \u26039 \u26159 \u21542 \u28858 \u26032 \u23458 \u65288 \u38651 \u35441 \u30446 \u21069 \u26377 \u27794 \u26377 \u20986 \u29694 \u22312 \u23458 \u20154 \u36039 \u26009 \u34920 \u65289 \u65292 \u36889 \u19968 \u27493 \u19981 \u33021 \u26202 \u26044 \u23531 \u20837 \u38928 \u32004 \u32000 \u37636 \u65292 \u21542 \u21063 \u26371 \u34987 \u33258 \u24049 \u21083 \u23531 \u30340 \u36889 \u31558 \u35492 \u21028 \
+    const isNewCustomer = checkIsNewCustomer(formData.phone);\
+    const depositAmount = CONFIG.DEPOSIT_AMOUNT[category.id] || 0;\
+\
+    const depositInfo = isNewCustomer\
+      ? \{\
+          required: true,\
+          amount: depositAmount,\
+          deadlineHours: CONFIG.DEPOSIT_DEADLINE_HOURS,\
+          bank: CONFIG.BANK_INFO,\
+        \}\
+      : \{ required: false \};\
+\
+    // \uc0\u24314 \u31435 \u26085 \u26310 \u20107 \u20214 \
+    const event = calendar.createEvent(\
+      `$\{formData.name\} - $\{category.name\}/$\{mainItem.name\}`,\
+      start,\
+      end,\
+      \{\
+        description:\
+          `\uc0\u38651 \u35441 \u65306 $\{formData.phone\}\\n` +\
+          `\uc0\u29983 \u26085 \u65306 $\{formData.birthday || ''\}\\n` +\
+          `\uc0\u26381 \u21209 \u20998 \u39006 \u65306 $\{category.name\}\\n` +\
+          `\uc0\u20027 \u35201 \u38917 \u30446 \u65306 $\{mainItem.name\}\\n` +\
+          `\uc0\u26126 \u32048 \u65306 \\n$\{breakdown.lines.join('\\n')\}\\n` +\
+          `\uc0\u38928 \u20272 \u37329 \u38989 \u65306 $\{breakdown.hasVariable ? breakdown.total + '\u65288 \u21547 \u38656 \u29694 \u22580 \u30906 \u35469 \u20043 \u38917 \u30446 \u65292 \u23526 \u38555 \u20197 \u29694 \u22580 \u28858 \u28310 \u65289 ' : 'NTD.' + breakdown.total\}\\n` +\
+          `\uc0\u23458 \u20154 \u36523 \u20221 \u65306 $\{isNewCustomer ? '\u26032 \u23458 ' : '\u33290 \u23458 '\}\\n` +\
+          (isNewCustomer\
+            ? `\uc0\u23450 \u37329 \u29376 \u24907 \u65306 \u24453 \u20184 \u27454 \u65292 \u38656 \u26044 \u36865 \u20986 \u24460 $\{CONFIG.DEPOSIT_DEADLINE_HOURS\}\u23567 \u26178 \u20839 \u23436 \u25104 \u21295 \u27454  NTD.$\{depositAmount\}\u65292 \u21542 \u21063 \u38928 \u32004 \u21462 \u28040 \\n`\
+            : '') +\
+          `\uc0\u20633 \u35387 \u65306 $\{formData.note || ''\}`,\
+      \}\
+    );\
+\
+    // \uc0\u20808 \u25226 \u36889 \u31558 \u38928 \u32004 \u23531 \u36914 \u12300 \u38928 \u32004 \u32000 \u37636 \u12301 \u34920 \u65292 \u20877 \u21435 \u37325 \u26032 \u25972 \u31639 \u21040 \u24215 \u27425 \u25976 \u65292 \u36889 \u27171 \u27425 \u25976 \u25165 \u26371 \u27491 \u30906 \u31639 \u20837 \u36889 \u19968 \u31558 \
+    logBooking(formData, category, mainItem, breakdown, start, event.getId(), isNewCustomer, depositAmount, null, referrerPhoneForCredit, companionPhone);\
+    const visitCount = upsertCustomerRecord(formData, serviceLabel, start);\
+    recordDiscountUsages(formData.phone, discountSelections, category, start, formData.referrerPhone, event.getId());\
+    updateCustomerCouponSummary(formData.phone);\
+    if (formData.referrerPhone) updateCustomerCouponSummary(formData.referrerPhone);\
+\
+    return \{\
+      success: true,\
+      message: '\uc0\u38928 \u32004 \u25104 \u21151 \u65281 ',\
+      visitCount: visitCount,\
+      breakdown: breakdown,\
+      depositInfo: depositInfo,\
+      lineBound: isPhoneBoundToLine(formData.phone),\
+    \};\
+  \} catch (err) \{\
+    return \{ success: false, message: '\uc0\u31995 \u32113 \u37679 \u35492 \u65306 ' + err.message \};\
+  \} finally \{\
+    lock.releaseLock();\
+  \}\
+\}\
+\
+// \uc0\u35336 \u31639 \u21152 \u36092 \u33287 \u20778 \u24800 \u30340 \u37329 \u38989 \u26126 \u32048 \
+// \uc0\u35299 \u26512 \u20027 \u35201 \u38917 \u30446 \u30340 \u23526 \u38555 \u37329 \u38989 \u65306 \u19968 \u33324 \u38917 \u30446 \u30452 \u25509 \u22238 \u20659 price\u65307 \u26377 priceFormula\u30340 \u65288 \u20363 \u22914 \u33290 \u23458 \u35036 \u33394 \u21443 \u29031 \u21322 \u27704 \u20037 \u38695 \u30473 \u25171 \u25240 \u65289 \u33258 \u21205 \u31639 \u20986 \u20358 \
+function resolveMainItemPrice(category, mainItem) \{\
+  if (mainItem.price !== null) return mainItem.price;\
+  if (mainItem.priceFormula) \{\
+    const baseItem = category.mainItems.find(m => m.id === mainItem.priceFormula.baseItemId);\
+    if (baseItem && baseItem.price !== null) \{\
+      return Math.round(baseItem.price * mainItem.priceFormula.multiplier);\
+    \}\
+  \}\
+  return null;\
+\}\
+\
+function buildBreakdown(category, mainItem, addonSelections, discountSelections) \{\
+  const lines = [];\
+  let total = 0;\
+  let hasVariable = false;\
+\
+  const resolvedPrice = resolveMainItemPrice(category, mainItem);\
+  if (resolvedPrice === null) \{\
+    hasVariable = true;\
+    lines.push(`\uc0\u20027 \u35201 \u38917 \u30446 \u65306 $\{mainItem.name\}\u65288 $\{mainItem.priceNote || '\u26178 \u20729 '\}\u65289 `);\
+  \} else \{\
+    total += resolvedPrice;\
+    const noteSuffix = mainItem.priceFormula ? '\uc0\u65288 \u20381 \u29694 \u34892 \u20729 \u26684 \u33258 \u21205 \u25563 \u31639 \u65289 ' : '';\
+    lines.push(`\uc0\u20027 \u35201 \u38917 \u30446 \u65306 $\{mainItem.name\}\u12288 NTD.$\{resolvedPrice\}$\{noteSuffix\}`);\
+  \}\
+\
+  (category.addonGroups || []).forEach(group => \{\
+    const selectedId = (addonSelections && addonSelections[group.groupId]) || 'none';\
+    if (selectedId === 'none') return;\
+    const opt = group.options.find(o => o.id === selectedId);\
+    if (!opt) return;\
+    if (opt.price === null) \{\
+      hasVariable = true;\
+      lines.push(`\uc0\u21152 \u36092 \u65306 $\{opt.name\}\u65288 $\{opt.priceNote || '\u38656 \u29694 \u22580 \u30906 \u35469 '\}\u65289 `);\
+    \} else if (opt.price !== 0) \{\
+      total += opt.price;\
+      lines.push(`\uc0\u21152 \u36092 \u65306 $\{opt.name\}`);\
+    \}\
+  \});\
+\
+  const discountIds = discountSelections || [];\
+  discountIds.forEach(discountId => \{\
+    const d = category.discounts.find(x => x.id === discountId);\
+    if (!d) return;\
+    total += d.price;\
+    lines.push(`\uc0\u20778 \u24800 \u65306 $\{d.name\}\u12288 NTD.$\{d.price\}`);\
+  \});\
+\
+  return \{ lines: lines, total: total, hasVariable: hasVariable \};\
+\}\
+\
+// ------------------------------------------------------------\
+// 7. \uc0\u35430 \u31639 \u34920 \u65306 \u23458 \u20154 \u36039 \u26009 \
+// ------------------------------------------------------------\
+function getSpreadsheet() \{\
+  return CONFIG.SPREADSHEET_ID\
+    ? SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID)\
+    : SpreadsheetApp.getActiveSpreadsheet();\
+\}\
+\
+function getOrCreateSheet(name, headers) \{\
+  const ss = getSpreadsheet();\
+  let sheet = ss.getSheetByName(name);\
+  if (!sheet) \{\
+    sheet = ss.insertSheet(name);\
+    sheet.appendRow(headers);\
+    sheet.setFrozenRows(1);\
+    applyDateColumnFormats(sheet, name);\
+    applyStatusDropdown(sheet, name);\
+    applyCategoryDropdown(sheet, name);\
+    applyDepositStatusDropdown(sheet, name);\
+  \}\
+  return sheet;\
+\}\
+\
+// \uc0\u12300 \u29376 \u24907 \u12301 \u27396 \u20301 \u65288 \u38928 \u32004 \u32000 \u37636 \u34920 \u31532 12\u27396 \u65289 \u21152 \u19978 \u19979 \u25289 \u36984 \u21934 \u65292 \u36991 \u20813 \u25163 \u21205 \u25171 \u23383 \u25171 \u37679 \u23383 \u65288 \u20363 \u22914 \u28431 \u25171 \u12300 \u24050 \u12301 \u65289 \u23566 \u33268 \u21516 \u27493 \u22833 \u25928 \
+function applyStatusDropdown(sheet, sheetName) \{\
+  if (sheetName !== CONFIG.BOOKING_LOG_SHEET_NAME) return;\
+  const rule = SpreadsheetApp.newDataValidation()\
+    .requireValueInList(['\uc0\u27491 \u24120 ', '\u24050 \u21462 \u28040 '], true)\
+    .setAllowInvalid(false)\
+    .build();\
+  sheet.getRange(2, 12, 2000, 1).setDataValidation(rule);\
+\}\
+\
+// \uc0\u12300 \u20998 \u39006 \u12301 \u27396 \u20301 \u65288 \u31532 4\u27396 \u65289 \u21152 \u19978 \u19979 \u25289 \u36984 \u21934 \u65292 \u36991 \u20813 \u25163 \u21205 \u25171 \u23383 \u25171 \u37679 \u23566 \u33268 \u12300 \u20462 \u25913 \u26178 \u27573 \u12301 \u12300 \u35036 \u30571 \u12301 \u31561 \u21151 \u33021 \u21453 \u26597 \u22833 \u25943 \
+function applyCategoryDropdown(sheet, sheetName) \{\
+  if (sheetName !== CONFIG.BOOKING_LOG_SHEET_NAME) return;\
+  const categoryNames = CONFIG.CATEGORIES.map(c => c.name);\
+  const rule = SpreadsheetApp.newDataValidation()\
+    .requireValueInList(categoryNames, true)\
+    .setAllowInvalid(false)\
+    .build();\
+  sheet.getRange(2, 4, 2000, 1).setDataValidation(rule);\
+\}\
+\
+// \uc0\u12300 \u23450 \u37329 \u29376 \u24907 \u12301 \u27396 \u20301 \u65288 \u31532 9\u27396 \u65289 \u21152 \u19978 \u19979 \u25289 \u36984 \u21934 \u65292 \u21482 \u25918 \u29376 \u24907 \u25991 \u23383 \u65292 \u23526 \u38555 \u37329 \u38989 \u21478 \u22806 \u25918 \u12300 \u23450 \u37329 \u37329 \u38989 \u12301 \u27396 \
+function applyDepositStatusDropdown(sheet, sheetName) \{\
+  if (sheetName !== CONFIG.BOOKING_LOG_SHEET_NAME) return;\
+  const rule = SpreadsheetApp.newDataValidation()\
+    .requireValueInList(['\uc0\u24453 \u20184 \u27454 ', '\u24050 \u20184 \u27454 ', '\u19981 \u38656 \u35201 '], true)\
+    .setAllowInvalid(false)\
+    .build();\
+  sheet.getRange(2, 9, 2000, 1).setDataValidation(rule);\
+\}\
+\
+// \uc0\u12304 \u21482 \u38656 \u35201 \u22519 \u34892 \u19968 \u27425 \u12305 \u24171 \u24050 \u32147 \u23384 \u22312 \u30340 \u12300 \u38928 \u32004 \u32000 \u37636 \u12301 \u20998 \u38913 \u35036 \u19978 \u29376 \u24907 \u27396 \u20301 \u19979 \u25289 \u36984 \u21934 \
+function setupStatusDropdown() \{\
+  const sheet = getOrCreateSheet(CONFIG.BOOKING_LOG_SHEET_NAME, ['\uc0\u24314 \u31435 \u26178 \u38291 ', '\u22995 \u21517 ', '\u38651 \u35441 ', '\u20998 \u39006 ', '\u20027 \u35201 \u38917 \u30446 ', '\u26126 \u32048 ', '\u38928 \u20272 \u37329 \u38989 ', '\u23458 \u20154 \u36523 \u20221 ', '\u23450 \u37329 \u29376 \u24907 ', '\u38928 \u32004 \u26085 \u26399 \u26178 \u27573 ', '\u25913 \u26399 \u27425 \u25976 ', '\u29376 \u24907 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u26085 \u26310 \u20107 \u20214 ID', '\u21453 \u39243 \u34920 \u21934 \u36899 \u32080 ', '\u21453 \u39243 \u29376 \u24907 ', '\u20171 \u32057 \u20154 \u38651 \u35441 ', '\u35036 \u30571 \u20358 \u28304 \u20107 \u20214 ID', '\u23450 \u37329 \u37329 \u38989 ', '\u21516 \u34892 \u32773 \u38651 \u35441 ']);\
+  applyStatusDropdown(sheet, CONFIG.BOOKING_LOG_SHEET_NAME);\
+  applyCategoryDropdown(sheet, CONFIG.BOOKING_LOG_SHEET_NAME);\
+  applyDepositStatusDropdown(sheet, CONFIG.BOOKING_LOG_SHEET_NAME);\
+  sheet.getRange(1, 20).setValue('\uc0\u23450 \u37329 \u37329 \u38989 ');\
+  sheet.getRange(1, 21).setValue('\uc0\u21516 \u34892 \u32773 \u38651 \u35441 ');\
+  Logger.log('\uc0\u29376 \u24907 \u65295 \u20998 \u39006 \u65295 \u23450 \u37329 \u29376 \u24907 \u19979 \u25289 \u36984 \u21934 \u35373 \u23450 \u23436 \u25104 ');\
+\}\
+\
+// \uc0\u21508 \u20998 \u38913 \u35041 \u12300 \u26085 \u26399 /\u26178 \u38291 \u12301 \u27396 \u20301 \u23565 \u25033 \u30340 \u20786 \u23384 \u26684 \u26684 \u24335 \u65288 \u27396 \u20301 \u32232 \u34399 \u28858 1-indexed\u65289 \
+function getDateColumnFormatsMap() \{\
+  return \{\
+    '\uc0\u23458 \u20154 \u36039 \u26009 ': \{ 4: 'yyyy-mm-dd' \},\
+    '\uc0\u38928 \u32004 \u32000 \u37636 ': \{ 1: 'yyyy-mm-dd hh:mm', 10: 'yyyy-mm-dd hh:mm' \},\
+    '\uc0\u20778 \u24800 \u20351 \u29992 \u32000 \u37636 ': \{ 5: 'yyyy-mm-dd hh:mm', 6: 'yyyy-mm-dd' \},\
+    '\uc0\u29151 \u26989 \u26178 \u27573 \u35373 \u23450 ': \{ 1: 'yyyy-mm-dd' \},\
+  \};\
+\}\
+\
+function applyDateColumnFormats(sheet, sheetName) \{\
+  const colFormats = getDateColumnFormatsMap()[sheetName];\
+  if (!colFormats) return;\
+  Object.keys(colFormats).forEach(col => \{\
+    sheet.getRange(2, Number(col), 2000, 1).setNumberFormat(colFormats[col]);\
+  \});\
+\}\
+\
+// \uc0\u12304 \u21482 \u38656 \u35201 \u22519 \u34892 \u19968 \u27425 \u12305 \u20462 \u27491 \u33290 \u20998 \u38913 \u65288 \u20808 \u21069 \u23601 \u24050 \u32147 \u24314 \u31435 \u30340 \u65289 \u30340 \u26085 \u26399 \u27396 \u20301 \u26684 \u24335 \u65292 \
+// \uc0\u35731 \u12300 \u21482 \u26377 \u26085 \u26399 \u27794 \u26377 \u24190 \u40670 \u24190 \u20998 \u12301 \u30340 \u27396 \u20301 \u35036 \u22238 \u23436 \u25972 \u30340 \u26178 \u38291 \u39023 \u31034 \
+function fixDateFormats() \{\
+  applyDateColumnFormats(getOrCreateSheet(CONFIG.CUSTOMER_SHEET_NAME, ['\uc0\u38651 \u35441 ', '\u22995 \u21517 ', '\u29983 \u26085 ', '\u39318 \u27425 \u20358 \u24215 ', '\u21040 \u24215 \u27425 \u25976 ', '\u26368 \u36817 \u26381 \u21209 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u24471 \u30693 \u31649 \u36947 \u20633 \u35387 ']), CONFIG.CUSTOMER_SHEET_NAME);\
+  applyDateColumnFormats(getOrCreateSheet(CONFIG.BOOKING_LOG_SHEET_NAME, ['\uc0\u24314 \u31435 \u26178 \u38291 ', '\u22995 \u21517 ', '\u38651 \u35441 ', '\u20998 \u39006 ', '\u20027 \u35201 \u38917 \u30446 ', '\u26126 \u32048 ', '\u38928 \u20272 \u37329 \u38989 ', '\u23458 \u20154 \u36523 \u20221 ', '\u23450 \u37329 \u29376 \u24907 ', '\u38928 \u32004 \u26085 \u26399 \u26178 \u27573 ', '\u25913 \u26399 \u27425 \u25976 ', '\u29376 \u24907 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u26085 \u26310 \u20107 \u20214 ID', '\u21453 \u39243 \u34920 \u21934 \u36899 \u32080 ', '\u21453 \u39243 \u29376 \u24907 ', '\u20171 \u32057 \u20154 \u38651 \u35441 ', '\u35036 \u30571 \u20358 \u28304 \u20107 \u20214 ID']), CONFIG.BOOKING_LOG_SHEET_NAME);\
+  applyDateColumnFormats(getOrCreateSheet(CONFIG.DISCOUNT_USAGE_SHEET_NAME, ['\uc0\u38651 \u35441 ', '\u20778 \u24800 ID', '\u20778 \u24800 \u21517 \u31281 ', '\u20998 \u39006 ', '\u20351 \u29992 \u26178 \u38291 ', '\u23565 \u25033 \u38928 \u32004 \u26085 \u26399 ', '\u20171 \u32057 \u20154 \u38651 \u35441 ', '\u26085 \u26310 \u20107 \u20214 ID', '\u29376 \u24907 ']), CONFIG.DISCOUNT_USAGE_SHEET_NAME);\
+  applyDateColumnFormats(getOrCreateSheet(CONFIG.SCHEDULE_SHEET_NAME, ['\uc0\u26085 \u26399 ', '\u21487 \u38928 \u32004 \u26178 \u27573 (\u36887 \u34399 \u20998 \u38548 \u65292 \u20363 \u22914  10:30,13:00,15:30)', '\u20633 \u35387 ']), CONFIG.SCHEDULE_SHEET_NAME);\
+  Logger.log('\uc0\u26085 \u26399 \u26684 \u24335 \u20462 \u27491 \u23436 \u25104 ');\
+\}\
+\
+function upsertCustomerRecord(formData, serviceLabel, startDate) \{\
+  const headers = ['\uc0\u38651 \u35441 ', '\u22995 \u21517 ', '\u29983 \u26085 ', '\u39318 \u27425 \u20358 \u24215 ', '\u21040 \u24215 \u27425 \u25976 ', '\u26368 \u36817 \u26381 \u21209 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u24471 \u30693 \u31649 \u36947 \u20633 \u35387 '];\
+  const sheet = getOrCreateSheet(CONFIG.CUSTOMER_SHEET_NAME, headers);\
+  const data = sheet.getDataRange().getValues();\
+  const dateStr = Utilities.formatDate(startDate, Session.getScriptTimeZone(), 'yyyy-MM-dd');\
+\
+  for (let i = 1; i < data.length; i++) \{\
+    if (normalizePhoneForLookup(data[i][0]) === normalizePhoneForLookup(formData.phone)) \{\
+      const rowIndex = i + 1;\
+      if (formData.note) sheet.getRange(rowIndex, 7).setValue(formData.note);\
+      // \uc0\u24471 \u30693 \u31649 \u36947 \u65295 \u24471 \u30693 \u31649 \u36947 \u20633 \u35387 \u65288 \u31532 8\u12289 9\u27396 \u65289 \u21482 \u22312 \u31532 \u19968 \u27425 \u24314 \u31435 \u26178 \u23531 \u20837 \u65292 \u22238 \u38957 \u23458 \u19981 \u26371 \u34987 \u35206 \u33995 \
+      const visitCount = recomputeCustomerSummary(formData.phone);\
+      return visitCount;\
+    \}\
+  \}\
+\
+  const source = (formData.referralSource || '').trim();\
+  const detail = (formData.referralDetail || '').trim();\
+  sheet.appendRow([\
+    "'" + formData.phone,\
+    formData.name,\
+    formData.birthday || '',\
+    dateStr,\
+    0,\
+    '',\
+    formData.note || '',\
+    source,\
+    detail,\
+  ]);\
+  return recomputeCustomerSummary(formData.phone);\
+\}\
+\
+// \uc0\u37325 \u26032 \u35336 \u31639 \u36889 \u20301 \u23458 \u20154 \u30340 \u21040 \u24215 \u27425 \u25976 \u33287 \u26368 \u36817 3\u31558 \u26381 \u21209 \u65288 \u30452 \u25509 \u24478 \u12300 \u38928 \u32004 \u32000 \u37636 \u12301 \u34920 \u29694 \u31639 \u65292 \u19981 \u29992 \u25163 \u21205 \u21152 \u28187 \u65292 \u27704 \u36960 \u28310 \u30906 \u65289 \
+function recomputeCustomerSummary(phone) \{\
+  const targetPhone = normalizePhoneForLookup(phone);\
+  if (!targetPhone) return 0;\
+\
+  const custHeaders = ['\uc0\u38651 \u35441 ', '\u22995 \u21517 ', '\u29983 \u26085 ', '\u39318 \u27425 \u20358 \u24215 ', '\u21040 \u24215 \u27425 \u25976 ', '\u26368 \u36817 \u26381 \u21209 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u24471 \u30693 \u31649 \u36947 \u20633 \u35387 '];\
+  const custSheet = getOrCreateSheet(CONFIG.CUSTOMER_SHEET_NAME, custHeaders);\
+  const custData = custSheet.getDataRange().getValues();\
+  let rowIndex = -1;\
+  for (let i = 1; i < custData.length; i++) \{\
+    if (normalizePhoneForLookup(custData[i][0]) === targetPhone) \{ rowIndex = i + 1; break; \}\
+  \}\
+  if (rowIndex === -1) return 0; // \uc0\u36996 \u19981 \u26159 \u26082 \u26377 \u23458 \u20154 \u65292 \u30053 \u36942 \
+\
+  const bookingHeaders = ['\uc0\u24314 \u31435 \u26178 \u38291 ', '\u22995 \u21517 ', '\u38651 \u35441 ', '\u20998 \u39006 ', '\u20027 \u35201 \u38917 \u30446 ', '\u26126 \u32048 ', '\u38928 \u20272 \u37329 \u38989 ', '\u23458 \u20154 \u36523 \u20221 ', '\u23450 \u37329 \u29376 \u24907 ', '\u38928 \u32004 \u26085 \u26399 \u26178 \u27573 ', '\u25913 \u26399 \u27425 \u25976 ', '\u29376 \u24907 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u26085 \u26310 \u20107 \u20214 ID', '\u21453 \u39243 \u34920 \u21934 \u36899 \u32080 ', '\u21453 \u39243 \u29376 \u24907 ', '\u20171 \u32057 \u20154 \u38651 \u35441 ', '\u35036 \u30571 \u20358 \u28304 \u20107 \u20214 ID', '\u23450 \u37329 \u37329 \u38989 ', '\u21516 \u34892 \u32773 \u38651 \u35441 '];\
+  const bookingSheet = getOrCreateSheet(CONFIG.BOOKING_LOG_SHEET_NAME, bookingHeaders);\
+  const bookingData = bookingSheet.getDataRange().getValues();\
+\
+  const validBookings = [];\
+  for (let i = 1; i < bookingData.length; i++) \{\
+    if (normalizePhoneForLookup(bookingData[i][2]) !== targetPhone) continue;\
+    if (bookingData[i][11] === '\uc0\u24050 \u21462 \u28040 ') continue;\
+    const apptDate = parseApptDateTime(bookingData[i][9]);\
+    if (!apptDate) continue;\
+    validBookings.push(\{ date: apptDate, label: `$\{bookingData[i][3]\}/$\{bookingData[i][4]\}` \});\
+  \}\
+  validBookings.sort((a, b) => b.date.getTime() - a.date.getTime());\
+\
+  const visitCount = validBookings.length;\
+  const recentLines = validBookings.slice(0, 3).map(b =>\
+    `$\{Utilities.formatDate(b.date, Session.getScriptTimeZone(), 'yyyy-MM-dd')\} $\{b.label\}`\
+  );\
+\
+  custSheet.getRange(rowIndex, 5).setValue(visitCount);\
+  custSheet.getRange(rowIndex, 6).setValue(recentLines.join('\\n'));\
+  return visitCount;\
+\}\
+\
+// \uc0\u25226 \u12300 \u24471 \u30693 \u31649 \u36947 \u12301 \u19979 \u25289 \u36984 \u38917 \u33287 \u35036 \u20805 \u25991 \u23383 \u65288 \u20363 \u22914 \u20171 \u32057 \u20154 \u22995 \u21517 \u65289 \u32068 \u25104 \u19968 \u27573 \u25991 \u23383 \u65292 \u32102 \u12300 \u38928 \u32004 \u32000 \u37636 \u12301 \u34920 \u30340 \u21512 \u20341 \u27396 \u20301 \u29992 \
+function buildReferralText(formData) \{\
+  const source = (formData.referralSource || '').trim();\
+  const detail = (formData.referralDetail || '').trim();\
+  if (!source) return '';\
+  return detail ? `$\{source\}\uc0\u65306 $\{detail\}` : source;\
+\}\
+\
+// \uc0\u26597 \u35426 \u36889 \u25903 \u38651 \u35441 \u26159 \u19981 \u26159 \u26032 \u23458 \u65288 \u23458 \u20154 \u36039 \u26009 \u34920 \u35041 \u26597 \u19981 \u21040 \u23601 \u31639 \u26032 \u23458 \u65289 \u65292 \u32102 \u21069 \u31471 \u21028 \u26039 \u35201 \u19981 \u35201 \u21839 \u12300 \u24471 \u30693 \u31649 \u36947 \u12301 \u29992 \
+function checkIsNewCustomer(phone) \{\
+  const targetPhone = normalizePhoneForLookup(phone);\
+  if (!targetPhone) return false;\
+  const headers = ['\uc0\u38651 \u35441 ', '\u22995 \u21517 ', '\u29983 \u26085 ', '\u39318 \u27425 \u20358 \u24215 ', '\u21040 \u24215 \u27425 \u25976 ', '\u26368 \u36817 \u26381 \u21209 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u24471 \u30693 \u31649 \u36947 \u20633 \u35387 '];\
+  const sheet = getOrCreateSheet(CONFIG.CUSTOMER_SHEET_NAME, headers);\
+  const data = sheet.getDataRange().getValues();\
+  for (let i = 1; i < data.length; i++) \{\
+    if (normalizePhoneForLookup(data[i][0]) === targetPhone) return false;\
+  \}\
+  return true;\
+\}\
+\
+// \uc0\u33290 \u23458 \u30452 \u25509 \u24118 \u20986 \u22995 \u21517 \u65295 \u29983 \u26085 \u65292 \u19981 \u29992 \u27599 \u27425 \u37325 \u22635 \u65307 \u26032 \u23458 \u22238 \u20659  isNew:true\u65292 \u20854 \u39192 \u27396 \u20301 \u31354 \u30333 \
+function lookupCustomerByPhone(phone) \{\
+  const targetPhone = normalizePhoneForLookup(phone);\
+  if (!targetPhone) return \{ isNew: true, name: '', birthday: '' \};\
+\
+  const headers = ['\uc0\u38651 \u35441 ', '\u22995 \u21517 ', '\u29983 \u26085 ', '\u39318 \u27425 \u20358 \u24215 ', '\u21040 \u24215 \u27425 \u25976 ', '\u26368 \u36817 \u26381 \u21209 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u24471 \u30693 \u31649 \u36947 \u20633 \u35387 '];\
+  const sheet = getOrCreateSheet(CONFIG.CUSTOMER_SHEET_NAME, headers);\
+  const data = sheet.getDataRange().getValues();\
+\
+  for (let i = 1; i < data.length; i++) \{\
+    if (normalizePhoneForLookup(data[i][0]) !== targetPhone) continue;\
+    const bday = data[i][2];\
+    let birthdayStr = '';\
+    if (bday) \{\
+      const bdayDate = bday instanceof Date ? bday : new Date(bday);\
+      if (!isNaN(bdayDate.getTime())) \{\
+        birthdayStr = Utilities.formatDate(bdayDate, Session.getScriptTimeZone(), 'yyyy-MM-dd');\
+      \}\
+    \}\
+    return \{ isNew: false, name: data[i][1] || '', birthday: birthdayStr \};\
+  \}\
+  return \{ isNew: true, name: '', birthday: '' \};\
+\}\
+\
+function logBooking(formData, category, mainItem, breakdown, startDate, eventId, isNewCustomer, depositAmount, touchupSourceEventId, referrerPhoneForCredit, companionPhone) \{\
+  const headers = ['\uc0\u24314 \u31435 \u26178 \u38291 ', '\u22995 \u21517 ', '\u38651 \u35441 ', '\u20998 \u39006 ', '\u20027 \u35201 \u38917 \u30446 ', '\u26126 \u32048 ', '\u38928 \u20272 \u37329 \u38989 ', '\u23458 \u20154 \u36523 \u20221 ', '\u23450 \u37329 \u29376 \u24907 ', '\u38928 \u32004 \u26085 \u26399 \u26178 \u27573 ', '\u25913 \u26399 \u27425 \u25976 ', '\u29376 \u24907 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u26085 \u26310 \u20107 \u20214 ID', '\u21453 \u39243 \u34920 \u21934 \u36899 \u32080 ', '\u21453 \u39243 \u29376 \u24907 ', '\u20171 \u32057 \u20154 \u38651 \u35441 ', '\u35036 \u30571 \u20358 \u28304 \u20107 \u20214 ID', '\u23450 \u37329 \u37329 \u38989 ', '\u21516 \u34892 \u32773 \u38651 \u35441 '];\
+  const sheet = getOrCreateSheet(CONFIG.BOOKING_LOG_SHEET_NAME, headers);\
+  const depositStatus = isNewCustomer ? '\uc0\u24453 \u20184 \u27454 ' : '\u19981 \u38656 \u35201 ';\
+  const feedbackUrl = ScriptApp.getService().getUrl() + '?page=feedback&id=' + eventId;\
+  sheet.appendRow([\
+    new Date(),\
+    formData.name,\
+    "'" + formData.phone,\
+    category.name,\
+    mainItem.name,\
+    breakdown.lines.join(' / '),\
+    breakdown.hasVariable ? breakdown.total + '(\uc0\u21547 \u29694 \u22580 \u30906 \u35469 \u38917 \u30446 )' : breakdown.total,\
+    isNewCustomer ? '\uc0\u26032 \u23458 ' : '\u33290 \u23458 ',\
+    depositStatus,\
+    new Date(startDate),\
+    0,\
+    '\uc0\u27491 \u24120 ',\
+    formData.note || '',\
+    buildReferralText(formData),\
+    eventId,\
+    feedbackUrl,\
+    '\uc0\u26410 \u35413 \u20729 ',\
+    referrerPhoneForCredit ? "'" + normalizePhoneForLookup(referrerPhoneForCredit) : '',\
+    touchupSourceEventId || '',\
+    isNewCustomer ? depositAmount : '',\
+    companionPhone ? "'" + normalizePhoneForLookup(companionPhone) : '',\
+  ]);\
+  formatDateTimeColumns(sheet, sheet.getLastRow());\
+\}\
+\
+// \uc0\u32113 \u19968 \u35373 \u23450 \u12300 \u24314 \u31435 \u26178 \u38291 \u12301 \u12300 \u38928 \u32004 \u26085 \u26399 \u26178 \u27573 \u12301 \u27396 \u20301 \u30340 \u39023 \u31034 \u26684 \u24335 \u65292 \u36991 \u20813 \u35430 \u31639 \u34920 \u33258 \u21205 \u26684 \u24335 \u21270 \u21482 \u39023 \u31034 \u26085 \u26399 \u12289 \u30475 \u19981 \u21040 \u26178 \u38291 \
+function formatDateTimeColumns(sheet, row) \{\
+  sheet.getRange(row, 1).setNumberFormat('yyyy-mm-dd hh:mm:ss'); // \uc0\u24314 \u31435 \u26178 \u38291 \
+  sheet.getRange(row, 10).setNumberFormat('yyyy-mm-dd hh:mm');   // \uc0\u38928 \u32004 \u26085 \u26399 \u26178 \u27573 \
+\}\
+\
+// \uc0\u36865 \u20986 \u38928 \u32004 \u25104 \u21151 \u24460 \u65292 \u25226 \u26377 \u20351 \u29992 \u21040 \u30340 \u20778 \u24800 \u23531 \u36914 \u12300 \u20778 \u24800 \u20351 \u29992 \u32000 \u37636 \u12301 \u65292 \u20379 \u20043 \u24460 \u21028 \u26039 \u26159 \u21542 \u29992 \u36942 \
+function recordDiscountUsages(phone, discountIds, category, apptDate, referrerPhone, eventId) \{\
+  if (!discountIds || !discountIds.length) return;\
+  const headers = ['\uc0\u38651 \u35441 ', '\u20778 \u24800 ID', '\u20778 \u24800 \u21517 \u31281 ', '\u20998 \u39006 ', '\u20351 \u29992 \u26178 \u38291 ', '\u23565 \u25033 \u38928 \u32004 \u26085 \u26399 ', '\u20171 \u32057 \u20154 \u38651 \u35441 ', '\u26085 \u26310 \u20107 \u20214 ID', '\u29376 \u24907 '];\
+  const sheet = getOrCreateSheet(CONFIG.DISCOUNT_USAGE_SHEET_NAME, headers);\
+  const apptDateStr = Utilities.formatDate(apptDate, Session.getScriptTimeZone(), 'yyyy-MM-dd');\
+\
+  discountIds.forEach(discountId => \{\
+    const d = category.discounts.find(x => x.id === discountId);\
+    if (!d) return;\
+    sheet.appendRow([\
+      "'" + normalizePhoneForLookup(phone),\
+      discountId,\
+      d.name,\
+      category.name,\
+      new Date(),\
+      apptDateStr,\
+      d.requiresReferrerPhone ? ("'" + normalizePhoneForLookup(referrerPhone || '')) : '',\
+      eventId,\
+      '\uc0\u27491 \u24120 ',\
+    ]);\
+  \});\
+\}\
+\
+// ------------------------------------------------------------\
+// 8. \uc0\u23458 \u20154 \u33258 \u21161 \u21462 \u28040 \u38928 \u32004 \
+// ------------------------------------------------------------\
+\
+// \uc0\u20381 \u38651 \u35441 \u26597 \u35426 \u36889 \u25903 \u38651 \u35441 \u12300 \u26410 \u20358 \u12289 \u23578 \u26410 \u21462 \u28040 \u12301 \u30340 \u38928 \u32004 \u28165 \u21934 \
+function getMyUpcomingBookings(phone) \{\
+  const targetPhone = normalizePhoneForLookup(phone);\
+  if (!targetPhone) return [];\
+\
+  const headers = ['\uc0\u24314 \u31435 \u26178 \u38291 ', '\u22995 \u21517 ', '\u38651 \u35441 ', '\u20998 \u39006 ', '\u20027 \u35201 \u38917 \u30446 ', '\u26126 \u32048 ', '\u38928 \u20272 \u37329 \u38989 ', '\u23458 \u20154 \u36523 \u20221 ', '\u23450 \u37329 \u29376 \u24907 ', '\u38928 \u32004 \u26085 \u26399 \u26178 \u27573 ', '\u25913 \u26399 \u27425 \u25976 ', '\u29376 \u24907 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u26085 \u26310 \u20107 \u20214 ID'];\
+  const sheet = getOrCreateSheet(CONFIG.BOOKING_LOG_SHEET_NAME, headers);\
+  const data = sheet.getDataRange().getValues();\
+  const now = new Date();\
+\
+  const results = [];\
+  for (let i = 1; i < data.length; i++) \{\
+    const row = data[i];\
+    const rowPhone = normalizePhoneForLookup(row[2]);\
+    const status = row[11];\
+    const apptRaw = row[9];\
+    const modifyCount = Number(row[10]) || 0;\
+    if (rowPhone !== targetPhone) continue;\
+    if (status === '\uc0\u24050 \u21462 \u28040 ') continue;\
+\
+    const apptDate = parseApptDateTime(apptRaw);\
+    if (!apptDate || isNaN(apptDate.getTime()) || apptDate < now) continue;\
+\
+    const daysUntil = (apptDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);\
+\
+    results.push(\{\
+      rowIndex: i + 1,\
+      eventId: row[14],\
+      name: row[1],\
+      category: row[3],\
+      mainItem: row[4],\
+      apptStr: Utilities.formatDate(apptDate, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm'),\
+      modifyCount: modifyCount,\
+      canModify: modifyCount < CONFIG.MAX_MODIFY_COUNT,\
+      withinMinDays: daysUntil < CONFIG.CANCEL_MODIFY_MIN_DAYS,\
+    \});\
+  \}\
+  return results;\
+\}\
+\
+// \uc0\u23458 \u20154 \u30906 \u35469 \u21462 \u28040 \u65306 \u26680 \u23565 \u38651 \u35441 \u19968 \u33268 \u24460 \u65292 \u21034 \u38500 \u26085 \u26310 \u20107 \u20214 \u12289 \u26356 \u26032 \u35430 \u31639 \u34920 \u29376 \u24907 \
+function cancelBookingByCustomer(eventId, phone) \{\
+  const targetPhone = normalizePhoneForLookup(phone);\
+  const headers = ['\uc0\u24314 \u31435 \u26178 \u38291 ', '\u22995 \u21517 ', '\u38651 \u35441 ', '\u20998 \u39006 ', '\u20027 \u35201 \u38917 \u30446 ', '\u26126 \u32048 ', '\u38928 \u20272 \u37329 \u38989 ', '\u23458 \u20154 \u36523 \u20221 ', '\u23450 \u37329 \u29376 \u24907 ', '\u38928 \u32004 \u26085 \u26399 \u26178 \u27573 ', '\u25913 \u26399 \u27425 \u25976 ', '\u29376 \u24907 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u26085 \u26310 \u20107 \u20214 ID'];\
+  const sheet = getOrCreateSheet(CONFIG.BOOKING_LOG_SHEET_NAME, headers);\
+  const data = sheet.getDataRange().getValues();\
+\
+  for (let i = 1; i < data.length; i++) \{\
+    if (String(data[i][14]) === String(eventId)) \{\
+      if (normalizePhoneForLookup(data[i][2]) !== targetPhone) \{\
+        return \{ success: false, message: '\uc0\u38651 \u35441 \u34399 \u30908 \u19981 \u31526 \u65292 \u28961 \u27861 \u21462 \u28040 \u36889 \u31558 \u38928 \u32004 \u12290 ' \};\
+      \}\
+      if (data[i][11] === '\uc0\u24050 \u21462 \u28040 ') \{\
+        return \{ success: false, message: '\uc0\u36889 \u31558 \u38928 \u32004 \u24050 \u32147 \u26159 \u21462 \u28040 \u29376 \u24907 \u20102 \u12290 ' \};\
+      \}\
+\
+      const apptDate = parseApptDateTime(data[i][9]);\
+      const daysUntil = apptDate ? (apptDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24) : null;\
+      if (daysUntil !== null && daysUntil < CONFIG.CANCEL_MODIFY_MIN_DAYS) \{\
+        return \{\
+          success: false,\
+          message: `\uc0\u20381 \u35215 \u23450 \u21462 \u28040 \u38656 \u25552 \u21069 $\{CONFIG.CANCEL_MODIFY_MIN_DAYS\}\u22825 \u21578 \u30693 \u65292 \u36889 \u31558 \u38928 \u32004 \u24050 \u32147 \u19981 \u36275 $\{CONFIG.CANCEL_MODIFY_MIN_DAYS\}\u22825 \u65292 \u28961 \u27861 \u32218 \u19978 \u33258 \u21205 \u21462 \u28040 \u12290 \u35531 \u30452 \u25509 \u36879 \u36942 \u23448 \u26041 LINE\u32879 \u32363 \u24215 \u23478 \u34389 \u29702 \u65292 \u20381 \u35215 \u23450 \u21487 \u33021 \u38656 \u25903 \u20184 \u30456 \u38364 \u36027 \u29992 \u12290 `,\
+        \};\
+      \}\
+\
+      try \{\
+        const calendar = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);\
+        const event = calendar.getEventById(eventId);\
+        if (event) event.deleteEvent();\
+      \} catch (err) \{\
+        // \uc0\u26085 \u26310 \u20107 \u20214 \u21487 \u33021 \u24050 \u32147 \u34987 \u21034 \u36942 \u65292 \u24573 \u30053 \u37679 \u35492 \u32380 \u32396 \u26356 \u26032 \u35430 \u31639 \u34920 \u29376 \u24907 \
+      \}\
+\
+      sheet.getRange(i + 1, 12).setValue('\uc0\u24050 \u21462 \u28040 '); // \u29376 \u24907 \u27396 \
+      sheet.getRange(i + 1, 13).setValue(\
+        (data[i][12] ? data[i][12] + '\uc0\u65307 ' : '') + '\u23458 \u20154 \u26044  ' +\
+        Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm') + ' \uc0\u33258 \u34892 \u21462 \u28040 '\
+      ); // \uc0\u20633 \u35387 \u27396 \
+\
+      // \uc0\u21516 \u27493 \u37325 \u26032 \u35336 \u31639 \u12300 \u23458 \u20154 \u36039 \u26009 \u12301 \u34920 \u30340 \u21040 \u24215 \u27425 \u25976 \u33287 \u26368 \u36817 \u26381 \u21209 \u65292 \u36991 \u20813 \u34987 \u21462 \u28040 \u30340 \u38928 \u32004 \u36996 \u31639 \u22312 \u27425 \u25976 \u35041 \
+      const serviceLabel = `$\{data[i][3]\}/$\{data[i][4]\}`;\
+      recomputeCustomerSummary(data[i][2]);\
+      markDiscountUsageStatus(eventId, '\uc0\u24050 \u21462 \u28040 ');\
+      updateCustomerCouponSummary(data[i][2]);\
+\
+      return \{\
+        success: true,\
+        message: `\uc0\u38928 \u32004 \u24050 \u25104 \u21151 \u21462 \u28040 \u12290 \u33509 \u24050 \u20184 \u23450 \u37329 \u65292 \u20381 \u35215 \u23450 \u21487 \u20445 \u30041 $\{CONFIG.DEPOSIT_HOLD_DAYS\}\u26085 \u20839 \u20351 \u29992 \u26044 \u19979 \u27425 \u38928 \u32004 \u65292 \u35531 \u26044 \u26399 \u38480 \u20839 \u36879 \u36942 \u23448 \u26041 LINE\u32879 \u32363 \u24215 \u23478 \u12290 `,\
+      \};\
+    \}\
+  \}\
+  return \{ success: false, message: '\uc0\u25214 \u19981 \u21040 \u36889 \u31558 \u38928 \u32004 \u65292 \u21487 \u33021 \u24050 \u32147 \u34987 \u21462 \u28040 \u25110 \u36039 \u26009 \u26377 \u35492 \u12290 ' \};\
+\}\
+\
+// \uc0\u21462 \u28040 \u38928 \u32004 \u26178 \u65292 \u25226 \u35442 \u31558 \u35336 \u20837 \u30340 \u21040 \u24215 \u27425 \u25976 \u25187 \u22238 \u12289 \u20006 \u24478 \u26381 \u21209 \u27511 \u21490 \u20013 \u31227 \u38500 \u23565 \u25033 \u37027 \u19968 \u31558 \
+// \uc0\u38928 \u32004 \u26085 \u26399 \u35722 \u21205 \u26178 \u65292 \u21516 \u27493 \u26356 \u26032 \u23458 \u20154 \u36039 \u26009 \u30340 \u26368 \u36817 \u26381 \u21209 \u12289 \u20778 \u24800 \u20351 \u29992 \u32000 \u37636 \u35041 \u23565 \u25033 \u30340 \u26085 \u26399 \
+// oldDateStr \uc0\u21487 \u28858  null\u65288 \u19981 \u30693 \u36947 \u33290 \u26085 \u26399 \u26178 \u65292 \u23458 \u20154 \u36039 \u26009 \u37027 \u37002 \u25913 \u29992 \u37325 \u26032 \u25972 \u31639 \u65292 \u20778 \u24800 \u20351 \u29992 \u32000 \u37636 \u20173 \u26371 \u26356 \u26032 \u65289 \
+function syncRelatedDatesForEvent(eventId, phone, categoryName, mainItemName, oldDateStr, newDateStr) \{\
+  if (oldDateStr && newDateStr && oldDateStr !== newDateStr) \{\
+    recomputeCustomerSummary(phone);\
+  \}\
+\
+  const headers = ['\uc0\u38651 \u35441 ', '\u20778 \u24800 ID', '\u20778 \u24800 \u21517 \u31281 ', '\u20998 \u39006 ', '\u20351 \u29992 \u26178 \u38291 ', '\u23565 \u25033 \u38928 \u32004 \u26085 \u26399 ', '\u20171 \u32057 \u20154 \u38651 \u35441 ', '\u26085 \u26310 \u20107 \u20214 ID', '\u29376 \u24907 '];\
+  const sheet = getOrCreateSheet(CONFIG.DISCOUNT_USAGE_SHEET_NAME, headers);\
+  const data = sheet.getDataRange().getValues();\
+  for (let i = 1; i < data.length; i++) \{\
+    if (String(data[i][7]) === String(eventId)) \{\
+      sheet.getRange(i + 1, 6).setValue(newDateStr);\
+    \}\
+  \}\
+\}\
+\
+// \uc0\u20381 \u26085 \u26310 \u20107 \u20214 ID\u65292 \u25226 \u12300 \u20778 \u24800 \u20351 \u29992 \u32000 \u37636 \u12301 \u35041 \u23565 \u25033 \u30340 \u21015 \u27161 \u25104 \u25351 \u23450 \u29376 \u24907 \u65288 \u21462 \u28040 \u38928 \u32004 \u26178 \u20778 \u24800 \u19968 \u36215 \u20316 \u24290 \u65292 \u24489 \u21407 \u26178 \u19968 \u36215 \u24674 \u24489 \u65289 \
+function markDiscountUsageStatus(eventId, status) \{\
+  if (!eventId) return;\
+  const headers = ['\uc0\u38651 \u35441 ', '\u20778 \u24800 ID', '\u20778 \u24800 \u21517 \u31281 ', '\u20998 \u39006 ', '\u20351 \u29992 \u26178 \u38291 ', '\u23565 \u25033 \u38928 \u32004 \u26085 \u26399 ', '\u20171 \u32057 \u20154 \u38651 \u35441 ', '\u26085 \u26310 \u20107 \u20214 ID', '\u29376 \u24907 '];\
+  const sheet = getOrCreateSheet(CONFIG.DISCOUNT_USAGE_SHEET_NAME, headers);\
+  const data = sheet.getDataRange().getValues();\
+  for (let i = 1; i < data.length; i++) \{\
+    if (String(data[i][7]) === String(eventId)) \{\
+      sheet.getRange(i + 1, 9).setValue(status);\
+    \}\
+  \}\
+\}\
+\
+// \uc0\u20381 \u26085 \u26310 \u20107 \u20214 ID\u65292 \u25226 \u12300 \u20778 \u24800 \u20351 \u29992 \u32000 \u37636 \u12301 \u35041 \u23565 \u25033 \u30340 \u21015 \u30340 \u26085 \u26310 \u20107 \u20214 ID\u25913 \u25104 \u26032 \u30340 \u65288 \u24489 \u21407 \u38928 \u32004 \u26178 \u65292 \u26085 \u26310 \u20107 \u20214 \u26371 \u29992 \u26032 ID\u37325 \u24314 \u65289 \
+function updateDiscountUsageEventId(oldEventId, newEventId) \{\
+  if (!oldEventId || !newEventId) return;\
+  const headers = ['\uc0\u38651 \u35441 ', '\u20778 \u24800 ID', '\u20778 \u24800 \u21517 \u31281 ', '\u20998 \u39006 ', '\u20351 \u29992 \u26178 \u38291 ', '\u23565 \u25033 \u38928 \u32004 \u26085 \u26399 ', '\u20171 \u32057 \u20154 \u38651 \u35441 ', '\u26085 \u26310 \u20107 \u20214 ID', '\u29376 \u24907 '];\
+  const sheet = getOrCreateSheet(CONFIG.DISCOUNT_USAGE_SHEET_NAME, headers);\
+  const data = sheet.getDataRange().getValues();\
+  for (let i = 1; i < data.length; i++) \{\
+    if (String(data[i][7]) === String(oldEventId)) \{\
+      sheet.getRange(i + 1, 8).setValue(newEventId);\
+    \}\
+  \}\
+\}\
+\
+// \uc0\u26356 \u26032 \u12300 \u23458 \u20154 \u36039 \u26009 \u12301 \u34920 \u35041 \u36889 \u20301 \u23458 \u20154 \u30340 \u12300 \u21487 \u29992 \u20778 \u24800 \u21048 \u25976 \u65295 \u26126 \u32048 \u12301 \u27396 \u20301 \u65288 \u31532 11\u12289 12\u27396 \u65289 \u65292 \u30064 \u21205 \u30070 \u19979 \u23601 \u26356 \u26032 \u65292 \u19981 \u29992 \u31561 \u21047 \u26032 \
+function updateCustomerCouponSummary(phone) \{\
+  try \{\
+    const targetPhone = normalizePhoneForLookup(phone);\
+    if (!targetPhone) return;\
+\
+    const custHeaders = ['\uc0\u38651 \u35441 ', '\u22995 \u21517 ', '\u29983 \u26085 ', '\u39318 \u27425 \u20358 \u24215 ', '\u21040 \u24215 \u27425 \u25976 ', '\u26368 \u36817 \u26381 \u21209 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u24471 \u30693 \u31649 \u36947 \u20633 \u35387 '];\
+    const custSheet = getOrCreateSheet(CONFIG.CUSTOMER_SHEET_NAME, custHeaders);\
+    const custData = custSheet.getDataRange().getValues();\
+\
+    let rowIndex = -1;\
+    for (let i = 1; i < custData.length; i++) \{\
+      if (normalizePhoneForLookup(custData[i][0]) === targetPhone) \{ rowIndex = i + 1; break; \}\
+    \}\
+    if (rowIndex === -1) return; // \uc0\u36996 \u19981 \u26159 \u23458 \u20154 \u36039 \u26009 \u34920 \u35041 \u30340 \u26082 \u26377 \u23458 \u20154 \u65292 \u30053 \u36942 \
+\
+    const coupons = getMyCoupons(phone);\
+    const detail = [];\
+    coupons.categories.forEach(cat => \{\
+      cat.items.forEach(item => detail.push(`$\{cat.name\}-$\{item.name\}\uc0\u65306 $\{item.status\}`));\
+    \});\
+\
+    custSheet.getRange(1, 11).setValue('\uc0\u21487 \u29992 \u20778 \u24800 \u21048 \u25976 ');\
+    custSheet.getRange(1, 12).setValue('\uc0\u21487 \u29992 \u20778 \u24800 \u26126 \u32048 ');\
+    custSheet.getRange(rowIndex, 11).setValue(coupons.totalCount);\
+    custSheet.getRange(rowIndex, 12).setValue(detail.join('; '));\
+  \} catch (err) \{\
+    // \uc0\u20778 \u24800 \u21048 \u25688 \u35201 \u26356 \u26032 \u22833 \u25943 \u19981 \u24433 \u38911 \u20027 \u35201 \u27969 \u31243 \u65292 \u23433 \u38748 \u30053 \u36942 \
+  \}\
+\}\
+\
+// \uc0\u24489 \u21407 \u38928 \u32004 \u65306 \u37325 \u26032 \u24314 \u31435 \u26085 \u26310 \u20107 \u20214 \u65288 \u21407 \u26412 \u30340 \u24050 \u32147 \u34987 \u21034 \u38500 \u65292 \u25937 \u19981 \u22238 \u20358 \u65292 \u21482 \u33021 \u26032 \u24314 \u19968 \u20491 \u65289 \u12289 \
+// \uc0\u25226 \u21040 \u24215 \u27425 \u25976 \u33287 \u26368 \u36817 \u26381 \u21209 \u37325 \u26032 \u25972 \u31639 \u12289 \u20778 \u24800 \u20351 \u29992 \u32000 \u37636 \u24674 \u24489 \u25104 \u24050 \u20351 \u29992 \u65292 \u19977 \u37002 \u36039 \u26009 \u37325 \u26032 \u23565 \u40778 \
+function restoreBooking(sheet, row, rowData) \{\
+  const oldEventId = rowData[14];\
+  const phone = rowData[2];\
+  const categoryName = rowData[3];\
+  const mainItemName = rowData[4];\
+  const apptDate = parseApptDateTime(rowData[9]);\
+  if (!apptDate) return;\
+\
+  const found = findMainItemByLabel(categoryName, mainItemName);\
+  const duration = found ? found.item.duration : 60;\
+  const newEnd = new Date(apptDate.getTime() + duration * 60000);\
+\
+  const calendar = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);\
+  const newEvent = calendar.createEvent(`$\{rowData[1]\} - $\{categoryName\}/$\{mainItemName\}`, apptDate, newEnd, \{\
+    description: `\uc0\u38651 \u35441 \u65306 $\{phone\}\\n\u65288 \u27492 \u31558 \u38928 \u32004 \u26366 \u34987 \u21462 \u28040 \u24460 \u21448 \u24489 \u21407 \u65292 \u26085 \u26310 \u20107 \u20214 \u28858 \u31995 \u32113 \u37325 \u26032 \u24314 \u31435 \u65289 `,\
+  \});\
+  const newEventId = newEvent.getId();\
+\
+  sheet.getRange(row, 15).setValue(newEventId); // \uc0\u26085 \u26310 \u20107 \u20214 ID\u27396 \
+  sheet.getRange(row, 13).setValue(\
+    (rowData[12] ? rowData[12] + '\uc0\u65307 ' : '') + '\u29376 \u24907 \u24489 \u21407 \u28858 \u27491 \u24120 \u65292 \u26085 \u26310 \u20107 \u20214 \u24050 \u37325 \u26032 \u24314 \u31435 \u65288 \u21407 ID\u65306 ' + oldEventId + '\u65289 '\
+  ); // \uc0\u20633 \u35387 \u27396 \
+\
+  recomputeCustomerSummary(phone);\
+  markDiscountUsageStatus(oldEventId, '\uc0\u27491 \u24120 ');\
+  updateDiscountUsageEventId(oldEventId, newEventId);\
+  updateCustomerCouponSummary(phone);\
+\}\
+\
+// \uc0\u12304 \u21482 \u38656 \u35201 \u22519 \u34892 \u19968 \u27425 \u12305 \u25226 \u26082 \u26377 \u30340 \u12300 \u23458 \u20154 \u36039 \u26009 \u12301 \u34920 \u24478 \u33290 \u27396 \u20301 \u32080 \u27083 \u25644 \u21040 \u26032 \u30340 \u65306 \
+// \uc0\u21034 \u38500 \u12300 \u26381 \u21209 \u27511 \u21490 \u12301 \u27396 \u65288 \u25913 \u29992 \u12300 \u26368 \u36817 \u26381 \u21209 \u12301 \u20445 \u30041 \u26368 \u36817 3\u31558 \u21363 \u21487 \u65292 \u23436 \u25972 \u32000 \u37636 \u26597 \u12300 \u38928 \u32004 \u32000 \u37636 \u12301 \u34920 \u23601 \u22909 \u65289 \
+// \uc0\u26032 \u22686 \u12300 \u24471 \u30693 \u31649 \u36947 \u20633 \u35387 \u12301 \u27396 \u65288 \u25226 \u21407 \u26412 \u28151 \u22312 \u12300 \u24471 \u30693 \u31649 \u36947 \u12301 \u35041 \u30340 \u35036 \u20805 \u25991 \u23383 \u20998 \u38283 \u23384 \u65292 \u26041 \u20415 \u19979 \u25289 \u31721 \u36984 \u32113 \u35336 \u65289 \
+function migrateCustomerSheetColumns() \{\
+  const sheet = getSpreadsheet().getSheetByName(CONFIG.CUSTOMER_SHEET_NAME);\
+  if (!sheet) \{ Logger.log('\uc0\u23458 \u20154 \u36039 \u26009 \u34920 \u19981 \u23384 \u22312 \u65292 \u30053 \u36942 \u36983 \u31227 '); return; \}\
+\
+  const headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];\
+\
+  const historyColIndex = headerRow.indexOf('\uc0\u26381 \u21209 \u27511 \u21490 '); // 0-indexed\
+  if (historyColIndex !== -1) \{\
+    sheet.deleteColumn(historyColIndex + 1); // 1-indexed\
+    Logger.log('\uc0\u24050 \u21034 \u38500 \u12300 \u26381 \u21209 \u27511 \u21490 \u12301 \u27396 \u20301 ');\
+  \} else \{\
+    Logger.log('\uc0\u25214 \u19981 \u21040 \u12300 \u26381 \u21209 \u27511 \u21490 \u12301 \u27396 \u20301 \u65292 \u21487 \u33021 \u24050 \u32147 \u36983 \u31227 \u36942 \u20102 ');\
+  \}\
+\
+  const headerRow2 = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];\
+  const referralColIndex = headerRow2.indexOf('\uc0\u24471 \u30693 \u31649 \u36947 '); // 0-indexed\
+  const hasDetailCol = headerRow2.indexOf('\uc0\u24471 \u30693 \u31649 \u36947 \u20633 \u35387 ') !== -1;\
+  if (referralColIndex !== -1 && !hasDetailCol) \{\
+    sheet.insertColumnAfter(referralColIndex + 1);\
+    sheet.getRange(1, referralColIndex + 2).setValue('\uc0\u24471 \u30693 \u31649 \u36947 \u20633 \u35387 ');\
+    Logger.log('\uc0\u24050 \u26032 \u22686 \u12300 \u24471 \u30693 \u31649 \u36947 \u20633 \u35387 \u12301 \u27396 \u20301 ');\
+  \} else if (hasDetailCol) \{\
+    Logger.log('\uc0\u12300 \u24471 \u30693 \u31649 \u36947 \u20633 \u35387 \u12301 \u27396 \u20301 \u24050 \u32147 \u23384 \u22312 \u65292 \u30053 \u36942 ');\
+  \}\
+\
+  Logger.log('\uc0\u36983 \u31227 \u23436 \u25104 \u65292 \u25509 \u19979 \u20358 \u22519 \u34892  setupCouponSummaryForAllCustomers \u21487 \u20197 \u38918 \u20415 \u25226 \u25152 \u26377 \u26082 \u26377 \u23458 \u20154 \u30340 \u12300 \u26368 \u36817 \u26381 \u21209 \u12301 \u37325 \u26032 \u25972 \u31639 \u25104 \u26368 \u26032 \u26684 \u24335 ');\
+\}\
+\
+// \uc0\u12304 \u21482 \u38656 \u35201 \u22519 \u34892 \u19968 \u27425 \u12305 \u24171 \u25152 \u26377 \u26082 \u26377 \u23458 \u20154 \u35036 \u19978 \u12300 \u21487 \u29992 \u20778 \u24800 \u21048 \u25976 \u65295 \u26126 \u32048 \u12301 \u27396 \u20301 \u30340 \u21021 \u22987 \u20540 \
+function setupCouponSummaryForAllCustomers() \{\
+  const custHeaders = ['\uc0\u38651 \u35441 ', '\u22995 \u21517 ', '\u29983 \u26085 ', '\u39318 \u27425 \u20358 \u24215 ', '\u21040 \u24215 \u27425 \u25976 ', '\u26368 \u36817 \u26381 \u21209 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u24471 \u30693 \u31649 \u36947 \u20633 \u35387 '];\
+  const custSheet = getOrCreateSheet(CONFIG.CUSTOMER_SHEET_NAME, custHeaders);\
+  const custData = custSheet.getDataRange().getValues();\
+  for (let i = 1; i < custData.length; i++) \{\
+    if (custData[i][0]) \{\
+      recomputeCustomerSummary(custData[i][0]);\
+      updateCustomerCouponSummary(custData[i][0]);\
+    \}\
+  \}\
+  Logger.log('\uc0\u24050 \u28858  ' + (custData.length - 1) + ' \u20301 \u23458 \u20154 \u26356 \u26032 \u26368 \u36817 \u26381 \u21209 \u33287 \u20778 \u24800 \u21048 \u25688 \u35201 \u27396 \u20301 ');\
+\}\
+\
+function normalizePhoneForLookup(raw) \{\
+  if (!raw) return '';\
+  return String(raw).replace(/[\\s\\-()]/g, '').trim();\
+\}\
+\
+// ------------------------------------------------------------\
+// \uc0\u20778 \u24800 \u21487 \u29992 \u24615 \u27298 \u26597 \u65288 \u32102 \u21069 \u31471 \u28784 \u25481 \u24050 \u29992 \u36942 \u30340 \u36984 \u38917 \u12289 \u24460 \u31471 \u36865 \u20986 \u21069 \u20877 \u39511 \u35657 \u19968 \u27425 \u65289 \
+// \uc0\u22238 \u20659 \u65306 \{ discountId: \{ available: bool, name, reason \}, ... \}\
+// ------------------------------------------------------------\
+function getDiscountAvailability(phone, categoryId, mainItemId) \{\
+  const category = CONFIG.CATEGORIES.find(c => c.id === categoryId);\
+  const result = \{\};\
+  if (!category) return result;\
+\
+  const targetPhone = normalizePhoneForLookup(phone);\
+  const headers = ['\uc0\u38651 \u35441 ', '\u20778 \u24800 ID', '\u20778 \u24800 \u21517 \u31281 ', '\u20998 \u39006 ', '\u20351 \u29992 \u26178 \u38291 ', '\u23565 \u25033 \u38928 \u32004 \u26085 \u26399 ', '\u20171 \u32057 \u20154 \u38651 \u35441 ', '\u26085 \u26310 \u20107 \u20214 ID', '\u29376 \u24907 '];\
+  const sheet = getOrCreateSheet(CONFIG.DISCOUNT_USAGE_SHEET_NAME, headers);\
+  const data = sheet.getDataRange().getValues();\
+  const now = new Date();\
+\
+  category.discounts.forEach(d => \{\
+    // \uc0\u38480 \u23450 \u29305 \u23450 \u20027 \u35201 \u38917 \u30446 \u25165 \u33021 \u36984 \u30340 \u20778 \u24800 \u65288 \u20363 \u22914 \u32396 \u20570 \u38695 \u30473 \u20778 \u24800 \u65289 \u65292 \u19981 \u31526 \u21512 \u36039 \u26684 \u30340 \u38917 \u30446 \u30452 \u25509 \u25803 \u25481 \
+    if (d.restrictedToMainItems && mainItemId && d.restrictedToMainItems.indexOf(mainItemId) === -1) \{\
+      result[d.id] = \{ available: false, name: d.name, reason: '\uc0\u27492 \u38917 \u30446 \u19981 \u36969 \u29992 ' \};\
+      return;\
+    \}\
+\
+    if (d.requiresReferrerPhone || d.requiresCompanionPhone) \{\
+      result[d.id] = \{ available: true, name: d.name \};\
+      return;\
+    \}\
+\
+    if (!targetPhone) \{\
+      result[d.id] = \{ available: true, name: d.name \};\
+      return;\
+    \}\
+\
+    // \uc0\u25214 \u20986 \u36889 \u25903 \u38651 \u35441 \u29992 \u36942 \u36889 \u20491 \u20778 \u24800 \u30340 \u26368 \u24460 \u19968 \u27425 \u32000 \u37636 \u65288 \u24050 \u21462 \u28040 \u30340 \u38928 \u32004 \u36899 \u24118 \u30340 \u20778 \u24800 \u20351 \u29992 \u19981 \u31639 \u25976 \u65289 \
+    let lastUsed = null;\
+    for (let i = 1; i < data.length; i++) \{\
+      if (normalizePhoneForLookup(data[i][0]) !== targetPhone) continue;\
+      if (data[i][1] !== d.id) continue;\
+      if (data[i][8] === '\uc0\u24050 \u21462 \u28040 ') continue;\
+      const usedAt = data[i][4] instanceof Date ? data[i][4] : new Date(data[i][4]);\
+      if (!lastUsed || usedAt > lastUsed) lastUsed = usedAt;\
+    \}\
+\
+    if (!lastUsed) \{\
+      result[d.id] = \{ available: true, name: d.name \};\
+      return;\
+    \}\
+\
+    if (d.id === CONFIG.BIRTHDAY_DISCOUNT_ID) \{\
+      const daysSinceUsed = (now.getTime() - lastUsed.getTime()) / (1000 * 60 * 60 * 24);\
+      result[d.id] = daysSinceUsed >= CONFIG.BIRTHDAY_RESET_DAYS\
+        ? \{ available: true, name: d.name \}\
+        : \{ available: false, name: d.name, reason: '\uc0\u24050 \u20351 \u29992 \u36942 \u65288 \u27599 \u24180 \u21487 \u20877 \u29992 \u19968 \u27425 \u65289 ' \};\
+      return;\
+    \}\
+\
+    result[d.id] = \{ available: false, name: d.name, reason: '\uc0\u24050 \u20351 \u29992 \u36942 ' \};\
+  \});\
+\
+  return result;\
+\}\
+\
+// ------------------------------------------------------------\
+// \uc0\u23458 \u20154 \u26597 \u35426 \u33258 \u24049 \u21487 \u29992 \u30340 \u20778 \u24800 \u21048 \u65288 \u20998 \u39006 \u26781 \u21015 \u65292 \u24050 \u20351 \u29992 \u36942 \u30340 \u19981 \u39023 \u31034 \u65292 \u20006 \u35336 \u31639 \u32317 \u24373 \u25976 \u65289 \
+// \uc0\u22238 \u20659 \u65306 \{ totalCount, categories: [\{ name, items: [\{ name, status \}] \}] \}\
+// ------------------------------------------------------------\
+function getMyCoupons(phone) \{\
+  const targetPhone = normalizePhoneForLookup(phone);\
+  if (!targetPhone) return \{ totalCount: 0, categories: [] \};\
+\
+  // \uc0\u23458 \u20154 \u30340 \u29983 \u26085 \u26376 \u20221 \
+  const custHeaders = ['\uc0\u38651 \u35441 ', '\u22995 \u21517 ', '\u29983 \u26085 ', '\u39318 \u27425 \u20358 \u24215 ', '\u21040 \u24215 \u27425 \u25976 ', '\u26368 \u36817 \u26381 \u21209 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u24471 \u30693 \u31649 \u36947 \u20633 \u35387 '];\
+  const custSheet = getOrCreateSheet(CONFIG.CUSTOMER_SHEET_NAME, custHeaders);\
+  const custData = custSheet.getDataRange().getValues();\
+  let birthMonth = null;\
+  for (let i = 1; i < custData.length; i++) \{\
+    if (normalizePhoneForLookup(custData[i][0]) !== targetPhone) continue;\
+    const bday = custData[i][2];\
+    if (bday) \{\
+      const bdayDate = bday instanceof Date ? bday : new Date(bday);\
+      if (!isNaN(bdayDate.getTime())) birthMonth = bdayDate.getMonth() + 1;\
+    \}\
+    break;\
+  \}\
+\
+  // \uc0\u20171 \u32057 \u20154 \u20778 \u24800 \u21048 \u65306 \u26597 \u12300 \u38928 \u32004 \u32000 \u37636 \u12301 \u35041 \u20171 \u32057 \u20154 \u38651 \u35441 \u26159 \u33258 \u24049 \u12289 \u19988 \u26410 \u21462 \u28040 \u12289 \u26410 \u36942 \u26399 \u30340 \u32000 \u37636 \u65292 \u20381 \u20998 \u39006 \u20998 \u38283 \u35336 \u31639 \
+  const bookingHeaders = ['\uc0\u24314 \u31435 \u26178 \u38291 ', '\u22995 \u21517 ', '\u38651 \u35441 ', '\u20998 \u39006 ', '\u20027 \u35201 \u38917 \u30446 ', '\u26126 \u32048 ', '\u38928 \u20272 \u37329 \u38989 ', '\u23458 \u20154 \u36523 \u20221 ', '\u23450 \u37329 \u29376 \u24907 ', '\u38928 \u32004 \u26085 \u26399 \u26178 \u27573 ', '\u25913 \u26399 \u27425 \u25976 ', '\u29376 \u24907 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u26085 \u26310 \u20107 \u20214 ID', '\u21453 \u39243 \u34920 \u21934 \u36899 \u32080 ', '\u21453 \u39243 \u29376 \u24907 ', '\u20171 \u32057 \u20154 \u38651 \u35441 ', '\u35036 \u30571 \u20358 \u28304 \u20107 \u20214 ID'];\
+  const bookingSheet = getOrCreateSheet(CONFIG.BOOKING_LOG_SHEET_NAME, bookingHeaders);\
+  const bookingData = bookingSheet.getDataRange().getValues();\
+  const now = new Date();\
+  const referralByCategory = \{\}; // \{ \uc0\u20998 \u39006 \u21517 \u31281 : \{ count, nearestExpiry \} \}\
+\
+  for (let i = 1; i < bookingData.length; i++) \{\
+    if (normalizePhoneForLookup(bookingData[i][17]) !== targetPhone) continue;\
+    if (bookingData[i][11] === '\uc0\u24050 \u21462 \u28040 ') continue;\
+\
+    const apptDate = parseApptDateTime(bookingData[i][9]);\
+    if (!apptDate) continue;\
+    const expiry = new Date(apptDate);\
+    expiry.setMonth(expiry.getMonth() + CONFIG.REFERRAL_CREDIT_VALID_MONTHS);\
+    if (expiry < now) continue;\
+\
+    const catName = bookingData[i][3];\
+    if (!referralByCategory[catName]) referralByCategory[catName] = \{ count: 0, nearestExpiry: null \};\
+    referralByCategory[catName].count++;\
+    if (!referralByCategory[catName].nearestExpiry || expiry < referralByCategory[catName].nearestExpiry) \{\
+      referralByCategory[catName].nearestExpiry = expiry;\
+    \}\
+  \}\
+\
+  let totalCount = 0;\
+  const categories = [];\
+\
+  CONFIG.CATEGORIES.forEach(cat => \{\
+    const availability = getDiscountAvailability(phone, cat.id);\
+    const items = [];\
+\
+    cat.discounts.forEach(d => \{\
+      if (d.restrictedToMainItems) return; // \uc0\u38480 \u23450 \u29305 \u23450 \u38917 \u30446 \u25165 \u33021 \u29992 \u30340 \u20778 \u24800 \u65288 \u20363 \u22914 \u32396 \u20570 \u38695 \u30473 \u20778 \u24800 \u65289 \u65292 \u19981 \u31639 \u19968 \u33324 \u20778 \u24800 \u21048 \u65292 \u19981 \u39023 \u31034 \
+      if (d.id === CONFIG.BIRTHDAY_DISCOUNT_ID) \{\
+        const a = availability[d.id];\
+        if (a && a.available && birthMonth) \{\
+          items.push(\{ name: '\uc0\u30070 \u26376 \u22781 \u26143 \u20778 \u24800 ', status: `$\{birthMonth\}\u26376 \u20221 \u21487 \u20351 \u29992 ` \});\
+          totalCount++;\
+        \}\
+        return;\
+      \}\
+      if (d.requiresReferrerPhone) \{\
+        const credit = referralByCategory[cat.name];\
+        if (credit && credit.count > 0) \{\
+          items.push(\{\
+            name: d.name,\
+            status: `\uc0\u30446 \u21069 \u26377  $\{credit.count\} \u24373 \u65292 \u26368 \u36817 \u21040 \u26399 \u26085  $\{Utilities.formatDate(credit.nearestExpiry, Session.getScriptTimeZone(), 'yyyy-MM-dd')\}`,\
+          \});\
+          totalCount += credit.count;\
+        \}\
+        // \uc0\u27794 \u26377 \u21048 \u30340 \u26178 \u20505 \u25972 \u26781 \u19981 \u39023 \u31034 \u65292 \u19981 \u30041 \u12300 \u30446 \u21069 \u27794 \u26377 \u12301 \u36889 \u31278 \u25552 \u31034 \u25991 \u23383 \
+        return;\
+      \}\
+      const a = availability[d.id];\
+      if (a && a.available) \{\
+        items.push(\{ name: d.name, status: '\uc0\u21487 \u20351 \u29992 ' \});\
+        totalCount++;\
+      \}\
+    \});\
+\
+    if (items.length) categories.push(\{ name: cat.name, items: items \});\
+  \});\
+\
+  return \{ totalCount: totalCount, categories: categories \};\
+\}\
+\
+// ------------------------------------------------------------\
+// \uc0\u24215 \u23478 \u26597 \u22781 \u26143 \u65306 \u25913 \u29992 \u12300 \u23458 \u20154 \u36039 \u26009 \u12301 \u34920 \u35041 \u30340 \u12300 \u29983 \u26085 \u26376 \u20221 \u12301 \u27396 \u20301 \u65288 \u20844 \u24335 \u21363 \u26178 \u32879 \u21205 \u65289 \u65292 \
+// \uc0\u19981 \u29992 \u21478 \u22806 \u32173 \u35703 \u19968 \u20491 \u34920 \u26684 \u65292 \u20063 \u19981 \u26371 \u26377 \u24536 \u35352 \u21047 \u26032 \u30340 \u21839 \u38988 \u12290 \
+// \uc0\u12304 \u21482 \u38656 \u35201 \u22519 \u34892 \u19968 \u27425 \u12305 \u24171 \u24050 \u32147 \u23384 \u22312 \u30340 \u12300 \u23458 \u20154 \u36039 \u26009 \u12301 \u20998 \u38913 \u35036 \u19978 \u36889 \u19968 \u27396 \
+// ------------------------------------------------------------\
+function setupBirthdayMonthColumn() \{\
+  const headers = ['\uc0\u38651 \u35441 ', '\u22995 \u21517 ', '\u29983 \u26085 ', '\u39318 \u27425 \u20358 \u24215 ', '\u21040 \u24215 \u27425 \u25976 ', '\u26368 \u36817 \u26381 \u21209 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u24471 \u30693 \u31649 \u36947 \u20633 \u35387 '];\
+  const sheet = getOrCreateSheet(CONFIG.CUSTOMER_SHEET_NAME, headers);\
+\
+  // \uc0\u31532 10\u27396 \u25918 \u12300 \u29983 \u26085 \u26376 \u20221 \u12301 \u65292 \u29992 \u20844 \u24335 \u30452 \u25509 \u21443 \u29031 \u31532 3\u27396 \u65288 \u29983 \u26085 \u65289 \u65292 \u29983 \u26085 \u19968 \u25913 \u36889 \u27396 \u23601 \u36319 \u33879 \u35722 \
+  sheet.getRange(1, 10).setValue('\uc0\u29983 \u26085 \u26376 \u20221 ');\
+  const lastRow = Math.max(sheet.getLastRow(), 2);\
+  for (let row = 2; row <= 2000; row++) \{\
+    sheet.getRange(row, 10).setFormula(`=IF(C$\{row\}="","",MONTH(C$\{row\}))`);\
+  \}\
+\
+  Logger.log('\uc0\u29983 \u26085 \u26376 \u20221 \u27396 \u20301 \u35373 \u23450 \u23436 \u25104 \u65292 \u20043 \u24460 \u21487 \u20197 \u30452 \u25509 \u23565 \u12300 \u29983 \u26085 \u26376 \u20221 \u12301 \u27396 \u20301 \u34920 \u38957 \u20351 \u29992 \u31721 \u36984 \u21151 \u33021 \u26597 \u35426 \u29305 \u23450 \u26376 \u20221 \u30340 \u22781 \u26143 \u12290 ');\
+\}\
+\
+// \uc0\u12300 \u38928 \u32004 \u26085 \u26399 \u26178 \u27573 \u12301 \u27396 \u20301 \u21487 \u33021 \u34987 \u35430 \u31639 \u34920 \u33258 \u21205 \u23384 \u25104  Date \u29289 \u20214 \u65292 \u20063 \u21487 \u33021 \u26159 \u32020 \u25991 \u23383 \u65292 \u36889 \u35041 \u32113 \u19968 \u36681 \u25104  Date\
+function parseApptDateTime(raw) \{\
+  if (!raw) return null;\
+  if (raw instanceof Date) return raw;\
+  const parsed = new Date(String(raw).trim().replace(' ', 'T'));\
+  return isNaN(parsed.getTime()) ? null : parsed;\
+\}\
+\
+// ------------------------------------------------------------\
+// 9. \uc0\u23458 \u20154 \u33258 \u21161 \u20462 \u25913 \u38928 \u32004 \u26178 \u27573 \u65288 \u21482 \u25913 \u26085 \u26399 \u65295 \u26178 \u27573 \u65292 \u26381 \u21209 \u38917 \u30446 \u19981 \u35722 \u65289 \
+// ------------------------------------------------------------\
+\
+// \uc0\u29992 \u12300 \u20998 \u39006 \u21517 \u31281 \u65291 \u20027 \u35201 \u38917 \u30446 \u21517 \u31281 \u12301 \u21453 \u26597  CONFIG \u35041 \u23565 \u25033 \u30340 \u38917 \u30446 \u35373 \u23450 \u65288 \u25214 \u26178 \u38263 \u29992 \u65289 \
+function findMainItemByLabel(categoryName, mainItemName) \{\
+  for (const cat of CONFIG.CATEGORIES) \{\
+    if (cat.name !== categoryName) continue;\
+    const item = cat.mainItems.find(m => m.name === mainItemName);\
+    if (item) return \{ category: cat, item: item \};\
+  \}\
+  return null;\
+\}\
+\
+// \uc0\u32102 \u20462 \u25913 \u38928 \u32004 \u38913 \u38754 \u29992 \u65306 \u26597 \u35426 \u26576 \u22825 \u21487 \u36984 \u26178 \u27573 \u26178 \u65292 \u35201 \u25226 \u12300 \u33258 \u24049 \u21407 \u26412 \u37027 \u31558 \u12301 \u25490 \u38500 \u65292 \
+// \uc0\u21542 \u21063 \u33258 \u24049 \u21407 \u26412 \u20308 \u29992 \u30340 \u26178 \u27573 \u26371 \u34987 \u31995 \u32113 \u35492 \u21028 \u25104 \u12300 \u24050 \u34987 \u21029 \u20154 \u38928 \u32004 \u12301 \
+function getAvailableSlotsForModify(dateStr, categoryName, mainItemName, excludeEventId) \{\
+  const found = findMainItemByLabel(categoryName, mainItemName);\
+  if (!found) return \{ status: 'unset', times: [] \};\
+  return getAvailableSlots(dateStr, found.item.id, excludeEventId);\
+\}\
+\
+function modifyBookingByCustomer(eventId, phone, newDate, newTime) \{\
+  const targetPhone = normalizePhoneForLookup(phone);\
+  const headers = ['\uc0\u24314 \u31435 \u26178 \u38291 ', '\u22995 \u21517 ', '\u38651 \u35441 ', '\u20998 \u39006 ', '\u20027 \u35201 \u38917 \u30446 ', '\u26126 \u32048 ', '\u38928 \u20272 \u37329 \u38989 ', '\u23458 \u20154 \u36523 \u20221 ', '\u23450 \u37329 \u29376 \u24907 ', '\u38928 \u32004 \u26085 \u26399 \u26178 \u27573 ', '\u25913 \u26399 \u27425 \u25976 ', '\u29376 \u24907 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u26085 \u26310 \u20107 \u20214 ID'];\
+  const sheet = getOrCreateSheet(CONFIG.BOOKING_LOG_SHEET_NAME, headers);\
+  const data = sheet.getDataRange().getValues();\
+\
+  for (let i = 1; i < data.length; i++) \{\
+    if (String(data[i][14]) !== String(eventId)) continue;\
+\
+    if (normalizePhoneForLookup(data[i][2]) !== targetPhone) \{\
+      return \{ success: false, message: '\uc0\u38651 \u35441 \u34399 \u30908 \u19981 \u31526 \u65292 \u28961 \u27861 \u20462 \u25913 \u36889 \u31558 \u38928 \u32004 \u12290 ' \};\
+    \}\
+    if (data[i][11] === '\uc0\u24050 \u21462 \u28040 ') \{\
+      return \{ success: false, message: '\uc0\u36889 \u31558 \u38928 \u32004 \u24050 \u32147 \u21462 \u28040 \u65292 \u28961 \u27861 \u20462 \u25913 \u65292 \u35531 \u37325 \u26032 \u38928 \u32004 \u12290 ' \};\
+    \}\
+\
+    const modifyCount = Number(data[i][10]) || 0;\
+    if (modifyCount >= CONFIG.MAX_MODIFY_COUNT) \{\
+      return \{\
+        success: false,\
+        message: `\uc0\u20381 \u35215 \u23450 \u25913 \u26399 \u20677 \u38480 $\{CONFIG.MAX_MODIFY_COUNT\}\u27425 \u65292 \u36889 \u31558 \u38928 \u32004 \u24050 \u32147 \u20351 \u29992 \u36942 \u25913 \u26399 \u65292 \u22914 \u38656 \u20877 \u27425 \u35519 \u25972 \u35531 \u30452 \u25509 \u36879 \u36942 \u23448 \u26041 LINE\u32879 \u32363 \u24215 \u23478 \u12290 `,\
+      \};\
+    \}\
+\
+    const oldApptStrRaw = data[i][9];\
+    const oldApptDate = parseApptDateTime(oldApptStrRaw);\
+    const daysUntil = oldApptDate ? (oldApptDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24) : null;\
+    if (daysUntil !== null && daysUntil < CONFIG.CANCEL_MODIFY_MIN_DAYS) \{\
+      return \{\
+        success: false,\
+        message: `\uc0\u20381 \u35215 \u23450 \u25913 \u26399 \u38656 \u25552 \u21069 $\{CONFIG.CANCEL_MODIFY_MIN_DAYS\}\u22825 \u21578 \u30693 \u65292 \u36889 \u31558 \u38928 \u32004 \u24050 \u32147 \u19981 \u36275 $\{CONFIG.CANCEL_MODIFY_MIN_DAYS\}\u22825 \u65292 \u28961 \u27861 \u32218 \u19978 \u33258 \u21205 \u25913 \u26399 \u12290 \u35531 \u30452 \u25509 \u36879 \u36942 \u23448 \u26041 LINE\u32879 \u32363 \u24215 \u23478 \u34389 \u29702 \u65292 \u20381 \u35215 \u23450 \u21487 \u33021 \u38656 \u25903 \u20184 \u30456 \u38364 \u36027 \u29992 \u12290 `,\
+      \};\
+    \}\
+\
+    const categoryName = data[i][3];\
+    const mainItemName = data[i][4];\
+    const found = findMainItemByLabel(categoryName, mainItemName);\
+    if (!found) \{\
+      return \{ success: false, message: '\uc0\u25214 \u19981 \u21040 \u23565 \u25033 \u30340 \u26381 \u21209 \u38917 \u30446 \u35373 \u23450 \u65292 \u35531 \u36879 \u36942 \u23448 \u26041 LINE\u32879 \u32363 \u24215 \u23478 \u21332 \u21161 \u20462 \u25913 \u12290 ' \};\
+    \}\
+    const duration = found.item.duration;\
+\
+    const parts = String(newTime).split(':').map(Number);\
+    const newStart = new Date(newDate + 'T00:00:00');\
+    newStart.setHours(parts[0], parts[1] || 0, 0, 0);\
+    const newEnd = new Date(newStart.getTime() + duration * 60000);\
+\
+    if (isTomorrow(newStart)) \{\
+      return \{ success: false, message: '\uc0\u26126 \u22825 \u19981 \u38283 \u25918 \u32218 \u19978 \u25913 \u26399 \u65292 \u22914 \u38656 \u35519 \u25972 \u35531 \u30452 \u25509 \u32879 \u32363 \u24215 \u23478 \u12290 ' \};\
+    \}\
+\
+    const calendar = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);\
+    const dayStart = new Date(newStart); dayStart.setHours(0, 0, 0, 0);\
+    const dayEnd = new Date(newStart); dayEnd.setHours(23, 59, 59, 999);\
+    const events = calendar.getEvents(dayStart, dayEnd).filter(ev => ev.getId() !== eventId);\
+    if (!isSlotFree(newStart, newEnd, events)) \{\
+      return \{ success: false, message: '\uc0\u24456 \u25265 \u27465 \u65292 \u36889 \u20491 \u26032 \u26178 \u27573 \u21083 \u21083 \u34987 \u21029 \u20154 \u38928 \u32004 \u36208 \u20102 \u65292 \u35531 \u37325 \u26032 \u36984 \u25799 \u12290 ' \};\
+    \}\
+\
+    try \{\
+      const event = calendar.getEventById(eventId);\
+      if (event) \{\
+        event.setTime(newStart, newEnd);\
+      \} else \{\
+        calendar.createEvent(`$\{data[i][1]\} - $\{categoryName\}/$\{mainItemName\}`, newStart, newEnd);\
+      \}\
+    \} catch (err) \{\
+      return \{ success: false, message: '\uc0\u26356 \u26032 \u26085 \u26310 \u26178 \u30332 \u29983 \u37679 \u35492 \u65306 ' + err.message \};\
+    \}\
+\
+    const newApptStr = Utilities.formatDate(newStart, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');\
+    sheet.getRange(i + 1, 10).setValue(newApptStr).setNumberFormat('yyyy-mm-dd hh:mm'); // \uc0\u38928 \u32004 \u26085 \u26399 \u26178 \u27573 \u27396 \
+    sheet.getRange(i + 1, 11).setValue(modifyCount + 1); // \uc0\u25913 \u26399 \u27425 \u25976 \u27396 \
+    sheet.getRange(i + 1, 13).setValue(\
+      (data[i][12] ? data[i][12] + '\uc0\u65307 ' : '') + '\u23458 \u20154 \u26044  ' +\
+      Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm') +\
+      ' \uc0\u33258 \u34892 \u25913 \u26399 \u65288 \u21407 \u65306 ' + oldApptStrRaw + '\u65289 '\
+    ); // \uc0\u20633 \u35387 \u27396 \
+\
+    // \uc0\u35430 \u31639 \u34920 \u26085 \u26399 \u27396 \u24050 \u32147 \u26356 \u26032 \u65292 \u36889 \u26178 \u20505 \u20877 \u37325 \u26032 \u25972 \u31639 \u23458 \u20154 \u36039 \u26009 \u30340 \u26368 \u36817 \u26381 \u21209 \u65292 \u25165 \u26371 \u35712 \u21040 \u26368 \u26032 \u26085 \u26399 \
+    recomputeCustomerSummary(data[i][2]);\
+\
+    return \{\
+      success: true,\
+      message: `\uc0\u38928 \u32004 \u26178 \u27573 \u24050 \u25104 \u21151 \u20462 \u25913 \u12290 \u20381 \u35215 \u23450 \u25913 \u26399 \u20677 \u38480 $\{CONFIG.MAX_MODIFY_COUNT\}\u27425 \u65292 \u36889 \u31558 \u24050 \u20351 \u29992 \u36942 \u65292 \u22914 \u38656 \u20877 \u35519 \u25972 \u35531 \u32879 \u32363 \u24215 \u23478 \u12290 `,\
+      newApptStr: newApptStr,\
+    \};\
+  \}\
+  return \{ success: false, message: '\uc0\u25214 \u19981 \u21040 \u36889 \u31558 \u38928 \u32004 \u65292 \u21487 \u33021 \u24050 \u32147 \u34987 \u21462 \u28040 \u25110 \u36039 \u26009 \u26377 \u35492 \u12290 ' \};\
+\}\
+\
+// \uc0\u25226 \u23458 \u20154 \u26381 \u21209 \u27511 \u21490 \u35041 \u33290 \u26085 \u26399 \u30340 \u37027 \u31558 \u65292 \u25563 \u25104 \u20462 \u25913 \u24460 \u30340 \u26032 \u26085 \u26399 \
+// ------------------------------------------------------------\
+// 10. \uc0\u35036 \u30571 \u38928 \u32004 \u65288 \u38480 \u23450 \u23436 \u25104 \u26085 \u24335 \u23233 \u25509 \u24460  7~25 \u22825 \u20839 \u30340 \u32000 \u37636 \u21487 \u30332 \u36215 \u65289 \
+// ------------------------------------------------------------\
+\
+// \uc0\u26597 \u35426 \u36889 \u25903 \u38651 \u35441 \u26377 \u21738 \u20123 \u26085 \u24335 \u23233 \u25509 \u32000 \u37636 \u65292 \u30446 \u21069 \u33853 \u22312 \u21487 \u35036 \u30571 \u30340 \u22825 \u25976 \u31684 \u22285 \u20839 \
+// \uc0\u31639 \u20841 \u20491 \u26178 \u38291 \u40670 \u20043 \u38291 \u24046 \u24190 \u20491 \u12300 \u26085 \u26310 \u22825 \u12301 \u65288 \u21482 \u30475 \u24180 \u26376 \u26085 \u65292 \u24573 \u30053 \u26178 \u20998 \u31186 \u65289 \u65292 \u31526 \u21512 \u12300 \u38548 \u22825 \u31639 1\u22825 \u12301 \u30340 \u30452 \u35258 \
+function calendarDaysBetween(fromDate, toDate) \{\
+  const a = new Date(fromDate); a.setHours(0, 0, 0, 0);\
+  const b = new Date(toDate); b.setHours(0, 0, 0, 0);\
+  return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));\
+\}\
+\
+function getTouchupEligibleBookings(phone) \{\
+  const targetPhone = normalizePhoneForLookup(phone);\
+  if (!targetPhone) return [];\
+\
+  const headers = ['\uc0\u24314 \u31435 \u26178 \u38291 ', '\u22995 \u21517 ', '\u38651 \u35441 ', '\u20998 \u39006 ', '\u20027 \u35201 \u38917 \u30446 ', '\u26126 \u32048 ', '\u38928 \u20272 \u37329 \u38989 ', '\u23458 \u20154 \u36523 \u20221 ', '\u23450 \u37329 \u29376 \u24907 ', '\u38928 \u32004 \u26085 \u26399 \u26178 \u27573 ', '\u25913 \u26399 \u27425 \u25976 ', '\u29376 \u24907 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u26085 \u26310 \u20107 \u20214 ID', '\u21453 \u39243 \u34920 \u21934 \u36899 \u32080 ', '\u21453 \u39243 \u29376 \u24907 ', '\u20171 \u32057 \u20154 \u38651 \u35441 ', '\u35036 \u30571 \u20358 \u28304 \u20107 \u20214 ID'];\
+  const sheet = getOrCreateSheet(CONFIG.BOOKING_LOG_SHEET_NAME, headers);\
+  const data = sheet.getDataRange().getValues();\
+  const now = new Date();\
+\
+  const eyelash = CONFIG.CATEGORIES.find(c => c.id === 'eyelash');\
+  const eligibleMainItemNames = eyelash.mainItems\
+    .filter(m => /\uc0\u26085 \u24335 \u21934 \u26681 \u23233 \u25509 /.test(m.name))\
+    .map(m => m.name);\
+\
+  const results = [];\
+  for (let i = 1; i < data.length; i++) \{\
+    const row = data[i];\
+    if (normalizePhoneForLookup(row[2]) !== targetPhone) continue;\
+    if (row[11] === '\uc0\u24050 \u21462 \u28040 ') continue;\
+    if (eligibleMainItemNames.indexOf(row[4]) === -1) continue;\
+\
+    const apptDate = parseApptDateTime(row[9]);\
+    if (!apptDate) continue;\
+    const daysSince = calendarDaysBetween(apptDate, now);\
+    if (daysSince < CONFIG.TOUCHUP_MIN_DAYS_SINCE || daysSince > CONFIG.TOUCHUP_MAX_DAYS_SINCE) continue;\
+\
+    const tierId = daysSince <= CONFIG.TOUCHUP_TIER_2W_MAX_DAYS ? 'lash_refill_2w' : 'lash_refill_3w';\
+    const tierItem = eyelash.mainItems.find(m => m.id === tierId);\
+\
+    const amountMatch = String(row[6]).match(/\\d+/);\
+    const originalAmount = amountMatch ? Number(amountMatch[0]) : 0;\
+\
+    results.push(\{\
+      eventId: row[14],\
+      name: row[1],\
+      mainItem: row[4],\
+      apptStr: Utilities.formatDate(apptDate, Session.getScriptTimeZone(), 'yyyy-MM-dd'),\
+      daysSince: Math.floor(daysSince),\
+      tierId: tierId,\
+      tierName: tierItem.name,\
+      discountRate: tierItem.discountRate,\
+      originalAmount: originalAmount,\
+    \});\
+  \}\
+  return results;\
+\}\
+\
+// \uc0\u36865 \u20986 \u35036 \u30571 \u38928 \u32004 \u65306 \u37329 \u38989  = \u21407 \u28040 \u36027 \u37329 \u38989  \'d7 \u25240 \u25187 \u65288 5\u25240 /8\u25240 \u65289  + \u36889 \u27425 \u26032 \u21152 \u36092 \u30340 \u21407 \u20729 \
+function submitTouchupBooking(formData) \{\
+  const lock = LockService.getScriptLock();\
+  const gotLock = lock.tryLock(10000);\
+  if (!gotLock) return \{ success: false, message: '\uc0\u31995 \u32113 \u24537 \u30860 \u20013 \u65292 \u35531 \u31245 \u24460 \u20877 \u35430 \u19968 \u27425 \u12290 ' \};\
+\
+  try \{\
+    if (!formData.noticeAgreed) return \{ success: false, message: '\uc0\u35531 \u20808 \u38321 \u35712 \u20006 \u21246 \u36984 \u21516 \u24847 \u34899 \u21069 \u27880 \u24847 \u20107 \u38917 ' \};\
+    if (!formData.name || !formData.phone) return \{ success: false, message: '\uc0\u22995 \u21517 \u33287 \u38651 \u35441 \u28858 \u24517 \u22635 ' \};\
+\
+    const category = CONFIG.CATEGORIES.find(c => c.id === 'eyelash');\
+    const mainItem = category.mainItems.find(m => m.id === formData.tierId);\
+    if (!mainItem || !mainItem.refillOnly) return \{ success: false, message: '\uc0\u35036 \u30571 \u38917 \u30446 \u37679 \u35492 ' \};\
+\
+    // \uc0\u37325 \u26032 \u39511 \u35657 \u36889 \u31558 \u21407 \u22987 \u38928 \u32004 \u30495 \u30340 \u31526 \u21512 \u36039 \u26684 \u65288 \u38450 \u27490 \u31428 \u25913 \u32178 \u22336 \u25110 \u21443 \u25976 \u65289 \
+    const eligible = getTouchupEligibleBookings(formData.phone)\
+      .find(b => String(b.eventId) === String(formData.originalEventId) && b.tierId === formData.tierId);\
+    if (!eligible) \{\
+      return \{ success: false, message: '\uc0\u25214 \u19981 \u21040 \u31526 \u21512 \u36039 \u26684 \u30340 \u21407 \u22987 \u38928 \u32004 \u32000 \u37636 \u65292 \u21487 \u33021 \u24050 \u32147 \u36229 \u36942 \u35036 \u30571 \u26399 \u38480 \u65292 \u35531 \u37325 \u26032 \u26597 \u35426 \u25110 \u32879 \u32363 \u24215 \u23478 \u12290 ' \};\
+    \}\
+\
+    const [h, m] = formData.time.split(':').map(Number);\
+    const start = new Date(formData.date + 'T00:00:00');\
+    start.setHours(h, m, 0, 0);\
+    const end = new Date(start.getTime() + mainItem.duration * 60000);\
+\
+    if (isTomorrow(start)) \{\
+      return \{ success: false, message: '\uc0\u26126 \u22825 \u19981 \u38283 \u25918 \u32218 \u19978 \u38928 \u32004 \u65292 \u22914 \u38656 \u38928 \u32004 \u35531 \u30452 \u25509 \u32879 \u32363 \u24215 \u23478 \u12290 ' \};\
+    \}\
+\
+    const calendar = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);\
+    const dayStart = new Date(start); dayStart.setHours(0, 0, 0, 0);\
+    const dayEnd = new Date(start); dayEnd.setHours(23, 59, 59, 999);\
+    const events = calendar.getEvents(dayStart, dayEnd);\
+    if (!isSlotFree(start, end, events)) \{\
+      return \{ success: false, message: '\uc0\u24456 \u25265 \u27465 \u65292 \u36889 \u20491 \u26178 \u27573 \u21083 \u21083 \u34987 \u21029 \u20154 \u38928 \u32004 \u36208 \u20102 \u65292 \u35531 \u37325 \u26032 \u36984 \u25799 \u26178 \u27573 \u12290 ' \};\
+    \}\
+\
+    const rateLabel = mainItem.discountRate === 0.5 ? '5\uc0\u25240 ' : '8\u25240 ';\
+    const baseAmount = Math.round(eligible.originalAmount * mainItem.discountRate);\
+    const lines = [`\uc0\u35036 \u30571 \u22522 \u30990 \u37329 \u38989 \u65288 \u21407 \u28040 \u36027  NTD.$\{eligible.originalAmount\} \'d7 $\{rateLabel\}\u65289 \u12288 NTD.$\{baseAmount\}`];\
+    let total = baseAmount;\
+\
+    (category.addonGroups || []).forEach(group => \{\
+      if (group.groupId === 'refill') return; // \uc0\u35036 \u30571 \u27969 \u31243 \u26412 \u36523 \u23601 \u26159 \u21368 \u30571 \u32396 \u25509 \u65292 \u19981 \u29992 \u20877 \u21839 \u19968 \u27425 \
+      const selectedId = (formData.addonSelections && formData.addonSelections[group.groupId]) || 'none';\
+      if (selectedId === 'none') return;\
+      const opt = group.options.find(o => o.id === selectedId);\
+      if (!opt) return;\
+      if (opt.price === null) \{\
+        lines.push(`\uc0\u21152 \u36092 \u65306 $\{opt.name\}\u65288 $\{opt.priceNote || '\u38656 \u29694 \u22580 \u30906 \u35469 '\}\u65289 `);\
+      \} else if (opt.price !== 0) \{\
+        total += opt.price;\
+        lines.push(`\uc0\u21152 \u36092 \u65306 $\{opt.name\}\u65288 \u21407 \u20729 \u65289 \u12288 NTD.$\{opt.price\}`);\
+      \}\
+    \});\
+\
+    const serviceLabel = `$\{category.name\}/$\{mainItem.name\}`;\
+\
+    const event = calendar.createEvent(\
+      `$\{formData.name\} - $\{category.name\}/$\{mainItem.name\}\uc0\u65288 \u35036 \u30571 \u65289 `,\
+      start,\
+      end,\
+      \{\
+        description:\
+          `\uc0\u38651 \u35441 \u65306 $\{formData.phone\}\\n` +\
+          `\uc0\u35036 \u30571 \u38917 \u30446 \u65306 $\{mainItem.name\}\\n` +\
+          `\uc0\u21407 \u38928 \u32004 \u26085 \u26399 \u65306 $\{eligible.apptStr\}\u65288 \u21407 \u38917 \u30446 \u65306 $\{eligible.mainItem\}\u65289 \\n` +\
+          `\uc0\u26126 \u32048 \u65306 \\n$\{lines.join('\\n')\}\\n` +\
+          `\uc0\u38928 \u20272 \u37329 \u38989 \u65306 NTD.$\{total\}\u65288 \u20381 \u19978 \u27425 \u28040 \u36027 \u37329 \u38989 \u25240 \u31639 \u65292 \u23526 \u38555 \u20197 \u29694 \u22580 \u32080 \u31639 \u28858 \u20027 \u65289 \\n` +\
+          `\uc0\u20633 \u35387 \u65306 $\{formData.note || ''\}`,\
+      \}\
+    );\
+\
+    const breakdown = \{ lines: lines, total: total, hasVariable: true \};\
+    // \uc0\u20808 \u25226 \u36889 \u31558 \u35036 \u30571 \u38928 \u32004 \u23531 \u36914 \u12300 \u38928 \u32004 \u32000 \u37636 \u12301 \u34920 \u65292 \u20877 \u37325 \u26032 \u25972 \u31639 \u21040 \u24215 \u27425 \u25976 \u65292 \u36889 \u27171 \u27425 \u25976 \u25165 \u26371 \u27491 \u30906 \u31639 \u20837 \u36889 \u19968 \u31558 \
+    logBooking(formData, category, mainItem, breakdown, start, event.getId(), false, 0, formData.originalEventId, '', '');\
+    const visitCount = upsertCustomerRecord(formData, serviceLabel, start);\
+\
+    return \{ success: true, message: '\uc0\u35036 \u30571 \u38928 \u32004 \u25104 \u21151 \u65281 ', visitCount: visitCount, total: total \};\
+  \} catch (err) \{\
+    return \{ success: false, message: '\uc0\u31995 \u32113 \u37679 \u35492 \u65306 ' + err.message \};\
+  \} finally \{\
+    lock.releaseLock();\
+  \}\
+\}\
+\
+// ------------------------------------------------------------\
+// 11. \uc0\u35430 \u31639 \u34920  \u8594  \u26085 \u26310  \u32879 \u21205 \u65288 \u25163 \u21205 \u25913 \u12300 \u38928 \u32004 \u32000 \u37636 \u12301 \u34920 \u65292 \u26085 \u26310 \u33258 \u21205 \u36319 \u33879 \u26356 \u26032 \u65289 \
+// ------------------------------------------------------------\
+\
+// \uc0\u12304 \u21482 \u38656 \u35201 \u22519 \u34892 \u19968 \u27425 \u12305 \u22312  Apps Script \u32232 \u36655 \u22120 \u36984 \u36889 \u20491 \u20989 \u24335 \u12289 \u40670 \u22519 \u34892 \u65292 \
+// \uc0\u23601 \u26371 \u24314 \u31435 \u22909 \u30435 \u30475 \u35430 \u31639 \u34920 \u32232 \u36655 \u21205 \u20316 \u30340 \u35320 \u30332 \u22120 \u65292 \u20043 \u24460 \u19981 \u29992 \u20877 \u25163 \u21205 \u34389 \u29702 \u12290 \
+// \uc0\u12304 \u21482 \u38656 \u35201 \u22519 \u34892 \u19968 \u27425 \u12305 \u19968 \u27425 \u25226 \u12300 \u35430 \u31639 \u34920 \u8594 \u26085 \u26310 \u12301 \u12300 \u26085 \u26310 \u8594 \u35430 \u31639 \u34920 \u12301 \u20841 \u20491 \u35320 \u30332 \u22120 \u37117 \u24314 \u31435 \u22909 \
+function setupAllSyncTriggers() \{\
+  createEditTrigger();\
+  createCalendarSyncTrigger();\
+  Logger.log('\uc0\u38617 \u21521 \u21516 \u27493 \u35320 \u30332 \u22120 \u37117 \u24314 \u31435 \u23436 \u25104 \u12290 ');\
+\}\
+\
+function createEditTrigger() \{\
+  // \uc0\u36991 \u20813 \u37325 \u35079 \u24314 \u31435 \u21516 \u19968 \u20491 \u35320 \u30332 \u22120 \
+  const triggers = ScriptApp.getProjectTriggers();\
+  triggers.forEach(t => \{\
+    if (t.getHandlerFunction() === 'onSheetEdit') ScriptApp.deleteTrigger(t);\
+  \});\
+\
+  const ss = getSpreadsheet();\
+  ScriptApp.newTrigger('onSheetEdit')\
+    .forSpreadsheet(ss)\
+    .onEdit()\
+    .create();\
+\
+  Logger.log('\uc0\u35320 \u30332 \u22120 \u24314 \u31435 \u23436 \u25104 \u65292 \u20043 \u24460 \u25163 \u21205 \u32232 \u36655 \u12300 \u38928 \u32004 \u32000 \u37636 \u12301 \u34920 \u30340 \u26085 \u26399 \u25110 \u29376 \u24907 \u27396 \u20301 \u65292 \u26085 \u26310 \u26371 \u33258 \u21205 \u21516 \u27493 \u12290 ');\
+\}\
+\
+// \uc0\u35430 \u31639 \u34920 \u34987 \u32232 \u36655 \u26178 \u33258 \u21205 \u22519 \u34892 \u65288 \u30001 \u19978 \u38754  createEditTrigger \u24314 \u31435 \u30340 \u35320 \u30332 \u22120 \u21628 \u21483 \u65292 \u19981 \u35201 \u33258 \u24049 \u25163 \u21205 \u22519 \u34892 \u36889 \u20491 \u20989 \u24335 \u65289 \
+function onSheetEdit(e) \{\
+  try \{\
+    if (!e || !e.range) return;\
+    const sheet = e.range.getSheet();\
+    if (sheet.getName() !== CONFIG.BOOKING_LOG_SHEET_NAME) return;\
+\
+    const row = e.range.getRow();\
+    if (row === 1) return; // \uc0\u34920 \u38957 \u21015 \u19981 \u34389 \u29702 \
+\
+    const col = e.range.getColumn();\
+    // 1-indexed \uc0\u27396 \u20301 \u23565 \u29031 \u65306 10=\u38928 \u32004 \u26085 \u26399 \u26178 \u27573 \u65292 12=\u29376 \u24907 \
+    if (col !== 10 && col !== 12) return;\
+\
+    const rowData = sheet.getRange(row, 1, 1, 21).getValues()[0];\
+    const eventId = rowData[14]; // \uc0\u26085 \u26310 \u20107 \u20214 ID\
+    if (!eventId) return;\
+\
+    if (col === 12) \{\
+      const newStatus = rowData[11];\
+      const oldStatus = e.oldValue || '';\
+\
+      if (newStatus === '\uc0\u24050 \u21462 \u28040 ' && oldStatus !== '\u24050 \u21462 \u28040 ') \{\
+        // \uc0\u29376 \u24907 \u25913 \u25104 \u12300 \u24050 \u21462 \u28040 \u12301 \u8594  \u21034 \u38500 \u26085 \u26310 \u20107 \u20214 \u12289 \u25187 \u22238 \u21040 \u24215 \u27425 \u25976 \u12289 \u20778 \u24800 \u20351 \u29992 \u32000 \u37636 \u19968 \u36215 \u20316 \u24290 \
+        try \{\
+          const calendar = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);\
+          const event = calendar.getEventById(eventId);\
+          if (event) event.deleteEvent();\
+        \} catch (err) \{\
+          // \uc0\u26085 \u26310 \u20107 \u20214 \u21487 \u33021 \u24050 \u32147 \u19981 \u23384 \u22312 \u65292 \u24573 \u30053 \u37679 \u35492 \u32380 \u32396 \u34389 \u29702 \u20854 \u20182 \u37096 \u20998 \
+        \}\
+        recomputeCustomerSummary(rowData[2]);\
+        markDiscountUsageStatus(eventId, '\uc0\u24050 \u21462 \u28040 ');\
+        updateCustomerCouponSummary(rowData[2]);\
+        return;\
+      \}\
+\
+      if (newStatus === '\uc0\u27491 \u24120 ' && oldStatus === '\u24050 \u21462 \u28040 ') \{\
+        // \uc0\u29376 \u24907 \u25913 \u22238 \u12300 \u27491 \u24120 \u12301 \u8594  \u24489 \u21407 \u65306 \u37325 \u26032 \u24314 \u31435 \u26085 \u26310 \u20107 \u20214 \u12289 \u21152 \u22238 \u21040 \u24215 \u27425 \u25976 \u12289 \u20778 \u24800 \u20351 \u29992 \u32000 \u37636 \u19968 \u36215 \u24674 \u24489 \
+        restoreBooking(sheet, row, rowData);\
+        return;\
+      \}\
+      return;\
+    \}\
+\
+    if (col === 10) \{\
+      const calendar = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);\
+      const event = calendar.getEventById(eventId);\
+      if (!event) return; // \uc0\u24050 \u21462 \u28040 \u29376 \u24907 \u19979 \u27794 \u26377 \u26085 \u26310 \u20107 \u20214 \u21487 \u20197 \u25913 \u26178 \u38291 \u65292 \u30452 \u25509 \u36339 \u36942 \
+\
+      // \uc0\u38928 \u32004 \u26085 \u26399 \u26178 \u27573 \u34987 \u25913  \u8594  \u33258 \u21205 \u26356 \u26032 \u26085 \u26310 \u20107 \u20214 \u30340 \u26178 \u38291 \
+      const apptDate = parseApptDateTime(rowData[9]);\
+      if (!apptDate) return; // \uc0\u26684 \u24335 \u30475 \u19981 \u25026 \u23601 \u36339 \u36942 \u65292 \u19981 \u30828 \u22871 \u37679 \u35492 \u26178 \u38291 \
+\
+      const categoryName = rowData[3];\
+      const mainItemName = rowData[4];\
+      const found = findMainItemByLabel(categoryName, mainItemName);\
+      const duration = found ? found.item.duration : 60; // \uc0\u25214 \u19981 \u21040 \u23565 \u25033 \u38917 \u30446 \u26178 \u65292 \u38928 \u35373 \u29992  60 \u20998 \u37912 \
+      const newEnd = new Date(apptDate.getTime() + duration * 60000);\
+      event.setTime(apptDate, newEnd);\
+      e.range.setNumberFormat('yyyy-mm-dd hh:mm');\
+\
+      // \uc0\u21516 \u27493 \u26356 \u26032 \u23458 \u20154 \u36039 \u26009 \u30340 \u26381 \u21209 \u27511 \u21490 \u12289 \u20778 \u24800 \u20351 \u29992 \u32000 \u37636 \u30340 \u23565 \u25033 \u26085 \u26399 \
+      const newDateStr = Utilities.formatDate(apptDate, Session.getScriptTimeZone(), 'yyyy-MM-dd');\
+      let oldDateStr = null;\
+      if (e.oldValue) \{\
+        const oldApptDate = parseApptDateTime(e.oldValue);\
+        if (oldApptDate) oldDateStr = Utilities.formatDate(oldApptDate, Session.getScriptTimeZone(), 'yyyy-MM-dd');\
+      \}\
+      syncRelatedDatesForEvent(eventId, rowData[2], categoryName, mainItemName, oldDateStr, newDateStr);\
+    \}\
+  \} catch (err) \{\
+    // \uc0\u23433 \u38748 \u22833 \u25943 \u65292 \u19981 \u35201 \u35731 \u24744 \u32232 \u36655 \u35430 \u31639 \u34920 \u26178 \u36339 \u20986 \u24178 \u25854 \u29992 \u30340 \u37679 \u35492 \u35338 \u24687 \
+  \}\
+\}\
+\
+// ------------------------------------------------------------\
+// 12. \uc0\u26085 \u26310  \u8594  \u35430 \u31639 \u34920  \u32879 \u21205 \u65288 \u38656 \u35201 \u20808 \u22312  Apps Script \u21855 \u29992 \u12300 \u36914 \u38542  Google \u26085 \u26310 \u26381 \u21209 \u12301 \u65289 \
+// ------------------------------------------------------------\
+\
+// \uc0\u12304 \u21482 \u38656 \u35201 \u22519 \u34892 \u19968 \u27425 \u12305 \u24314 \u31435 \u30435 \u30475 \u26085 \u26310 \u35722 \u21205 \u30340 \u35320 \u30332 \u22120 \
+function createCalendarSyncTrigger() \{\
+  const triggers = ScriptApp.getProjectTriggers();\
+  triggers.forEach(t => \{\
+    if (t.getHandlerFunction() === 'onCalendarUpdated') ScriptApp.deleteTrigger(t);\
+  \});\
+\
+  // 'primary' \uc0\u26159  Apps Script \u20839 \u37096 \u30340 \u20195 \u31281 \u65292 forUserCalendar \u38656 \u35201 \u30495 \u27491 \u30340 \u26085 \u26310  ID\u65288 \u36890 \u24120 \u26159  Email\u65289 \u65292 \
+  // \uc0\u20808 \u36879 \u36942  CalendarApp \u25226 \u23427 \u35299 \u26512 \u25104 \u23526 \u38555  ID\u65292 \u21542 \u21063 \u26371 \u34987  Google \u20282 \u26381 \u22120 \u25298 \u32085 \u12289 \u36339 \u20986 \u31840 \u32113 \u30340 \u37679 \u35492 \u35338 \u24687 \
+  const calendar = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);\
+  if (!calendar) \{\
+    throw new Error('\uc0\u25214 \u19981 \u21040  CONFIG.CALENDAR_ID \u25351 \u23450 \u30340 \u26085 \u26310 \u65292 \u35531 \u30906 \u35469 \u35373 \u23450 \u26159 \u21542 \u27491 \u30906 ');\
+  \}\
+  const realCalendarId = calendar.getId();\
+\
+  ScriptApp.newTrigger('onCalendarUpdated')\
+    .forUserCalendar(realCalendarId)\
+    .onEventUpdated()\
+    .create();\
+\
+  Logger.log('\uc0\u26085 \u26310 \u30435 \u30475 \u35320 \u30332 \u22120 \u24314 \u31435 \u23436 \u25104 \u65288 \u26085 \u26310 ID\u65306 ' + realCalendarId + '\u65289 \u12290 \u20043 \u24460 \u25163 \u21205 \u25913 \u26085 \u26310 \u20107 \u20214 \u30340 \u26178 \u38291 \u25110 \u21034 \u38500 \u20107 \u20214 \u65292 \u35430 \u31639 \u34920 \u26371 \u33258 \u21205 \u21516 \u27493 \u12290 ');\
+\}\
+\
+// \uc0\u26085 \u26310 \u26377 \u35722 \u21205 \u26178 \u33258 \u21205 \u22519 \u34892 \u12290 \u22240 \u28858 \u26085 \u26310 \u26412 \u36523 \u19981 \u26371 \u21578 \u35380 \u25105 \u20497 \u12300 \u21738 \u19968 \u31558 \u20107 \u20214 \u35722 \u20102 \u12301 \u65292 \
+// \uc0\u29992  sync token \u30340 \u26041 \u24335 \u36319  Google \u35201 \u12300 \u19978 \u27425 \u21516 \u27493 \u20043 \u24460 \u26377 \u21738 \u20123 \u20107 \u20214 \u35722 \u21205 \u36942 \u12301 \u30340 \u28165 \u21934 \
+function onCalendarUpdated(e) \{\
+  try \{\
+    const calendarId = (e && e.calendarId) || CalendarApp.getCalendarById(CONFIG.CALENDAR_ID).getId();\
+    const props = PropertiesService.getScriptProperties();\
+    const tokenKey = 'CAL_SYNC_TOKEN_' + calendarId;\
+    let syncToken = props.getProperty(tokenKey);\
+\
+    let pageToken = null;\
+    let response;\
+\
+    do \{\
+      const options = \{ maxResults: 50 \};\
+      if (pageToken) options.pageToken = pageToken;\
+      if (syncToken) options.syncToken = syncToken;\
+      else options.timeMin = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();\
+\
+      try \{\
+        response = Calendar.Events.list(calendarId, options);\
+      \} catch (err) \{\
+        // sync token \uc0\u22833 \u25928 \u65288 \u20363 \u22914 \u22826 \u20037 \u27794 \u21516 \u27493 \u65289 \u65292 \u28165 \u25481 \u37325 \u26032 \u20570 \u19968 \u27425 \u23436 \u25972 \u27604 \u23565 \
+        props.deleteProperty(tokenKey);\
+        syncToken = null;\
+        delete options.syncToken;\
+        options.timeMin = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();\
+        response = Calendar.Events.list(calendarId, options);\
+      \}\
+\
+      (response.items || []).forEach(applyCalendarEventChangeToSheet);\
+      pageToken = response.nextPageToken;\
+      if (!pageToken && response.nextSyncToken) \{\
+        props.setProperty(tokenKey, response.nextSyncToken);\
+      \}\
+    \} while (pageToken);\
+  \} catch (err) \{\
+    // \uc0\u23433 \u38748 \u22833 \u25943 \u65292 \u36991 \u20813 \u26085 \u26310 \u21516 \u27493 \u22833 \u25943 \u24178 \u25854 \u20854 \u20182 \u21151 \u33021 \
+  \}\
+\}\
+\
+// \uc0\u25226 \u21934 \u19968 \u20491 \u12300 \u26377 \u35722 \u21205 \u30340 \u26085 \u26310 \u20107 \u20214 \u12301 \u22871 \u29992 \u22238 \u12300 \u38928 \u32004 \u32000 \u37636 \u12301 \u34920 \u23565 \u25033 \u30340 \u37027 \u19968 \u21015 \
+function applyCalendarEventChangeToSheet(ev) \{\
+  const eventId = ev.id;\
+  const headers = ['\uc0\u24314 \u31435 \u26178 \u38291 ', '\u22995 \u21517 ', '\u38651 \u35441 ', '\u20998 \u39006 ', '\u20027 \u35201 \u38917 \u30446 ', '\u26126 \u32048 ', '\u38928 \u20272 \u37329 \u38989 ', '\u23458 \u20154 \u36523 \u20221 ', '\u23450 \u37329 \u29376 \u24907 ', '\u38928 \u32004 \u26085 \u26399 \u26178 \u27573 ', '\u25913 \u26399 \u27425 \u25976 ', '\u29376 \u24907 ', '\u20633 \u35387 ', '\u24471 \u30693 \u31649 \u36947 ', '\u26085 \u26310 \u20107 \u20214 ID', '\u21453 \u39243 \u34920 \u21934 \u36899 \u32080 ', '\u21453 \u39243 \u29376 \u24907 ', '\u20171 \u32057 \u20154 \u38651 \u35441 ', '\u35036 \u30571 \u20358 \u28304 \u20107 \u20214 ID'];\
+  const sheet = getOrCreateSheet(CONFIG.BOOKING_LOG_SHEET_NAME, headers);\
+  const data = sheet.getDataRange().getValues();\
+\
+  for (let i = 1; i < data.length; i++) \{\
+    if (String(data[i][14]) !== String(eventId)) continue; // \uc0\u25214 \u19981 \u21040 \u23601 \u20195 \u34920 \u19981 \u26159 \u26412 \u31995 \u32113 \u24314 \u31435 \u30340 \u20107 \u20214 \u65292 \u30053 \u36942 \
+\
+    const rowIndex = i + 1;\
+    const phone = data[i][2];\
+    const categoryName = data[i][3];\
+    const mainItemName = data[i][4];\
+\
+    if (ev.status === 'cancelled') \{\
+      if (data[i][11] !== '\uc0\u24050 \u21462 \u28040 ') \{\
+        sheet.getRange(rowIndex, 12).setValue('\uc0\u24050 \u21462 \u28040 ');\
+        sheet.getRange(rowIndex, 13).setValue(\
+          (data[i][12] ? data[i][12] + '\uc0\u65307 ' : '') + '\u20597 \u28204 \u21040 \u26085 \u26310 \u20107 \u20214 \u34987 \u21034 \u38500 \u65292 \u31995 \u32113 \u33258 \u21205 \u27161 \u35352 \u21462 \u28040 \u65288 \u35531 \u30906 \u35469 \u26159 \u21542 \u28858 \u35492 \u21034 \u65289 '\
+        );\
+        recomputeCustomerSummary(phone);\
+        markDiscountUsageStatus(eventId, '\uc0\u24050 \u21462 \u28040 ');\
+        updateCustomerCouponSummary(phone);\
+      \}\
+      return;\
+    \}\
+\
+    if (ev.start && ev.start.dateTime) \{\
+      const newStart = new Date(ev.start.dateTime);\
+      const oldApptDate = parseApptDateTime(data[i][9]);\
+\
+      // \uc0\u26178 \u38291 \u36319 \u21407 \u26412 \u35352 \u37636 \u30340 \u19968 \u27171 \u65288 \u35492 \u24046 \u22312 1\u20998 \u37912 \u20839 \u65289 \u23601 \u19981 \u29992 \u26356 \u26032 \u65292 \u36991 \u20813 \u28961 \u24847 \u32681 \u30340 \u23531 \u20837 \
+      if (oldApptDate && Math.abs(oldApptDate.getTime() - newStart.getTime()) < 60000) return;\
+\
+      const newApptStr = Utilities.formatDate(newStart, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');\
+      sheet.getRange(rowIndex, 10).setValue(newApptStr).setNumberFormat('yyyy-mm-dd hh:mm');\
+\
+      const oldDateStr = oldApptDate ? Utilities.formatDate(oldApptDate, Session.getScriptTimeZone(), 'yyyy-MM-dd') : null;\
+      const newDateStr = Utilities.formatDate(newStart, Session.getScriptTimeZone(), 'yyyy-MM-dd');\
+      syncRelatedDatesForEvent(eventId, phone, categoryName, mainItemName, oldDateStr, newDateStr);\
+    \}\
+    return;\
+  \}\
+\}}
