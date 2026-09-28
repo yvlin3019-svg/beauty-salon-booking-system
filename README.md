@@ -217,8 +217,6 @@ beauty-salon-booking-system/
 6. 「部署 → 新增部署作業 → 網頁應用程式」，取得 Web App 網址。
 7. 在 LINE Developers 將 Webhook URL 設為該網址，並把預約連結放進官方帳號的圖文選單。
 
-> ⚠️ Channel access token 等密鑰請勿提交到 GitHub。
-
 ---
 
 ## 限制與未來改進
