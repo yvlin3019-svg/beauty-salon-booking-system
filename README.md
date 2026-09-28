@@ -1,4 +1,3 @@
-# beauty-salon-booking-system
 # 輕量化美業線上預約與客戶管理系統 (Beauty Salon Booking System)
 
 一個基於 **Google Apps Script (GAS)** 與 **LINE Messaging API** 開發的端到端（End-to-End）自動化預約與 CRM 系統。專為小型美業工作室設計，旨在以低成本的 IT 自動化取代人工客服，提升顧客預約體驗並降低營運溝通成本。
