@@ -231,6 +231,4 @@ beauty-salon-booking-system/
 - [ ] 完成「服務反饋」頁面（`feedback.html`）：預約紀錄已預留「反饋表單連結」與「反饋狀態」欄位，每筆預約也會自動產生專屬反饋連結
 - [ ] 將服務項目與價格移到試算表中，讓店家不需改程式即可維護
 - [ ] 透過時間驅動觸發器，自動推播「來店前三天提醒與工作室地點」及生日優惠提醒（`pushToLine` 已實作）
-- [ ] 驗證 LINE Webhook 的 `x-line-signature`，提升安全性
-- [ ] 使用 [clasp](https://github.com/google/clasp) 將 Apps Script 專案與 GitHub 版本控制整合
 - [ ] 評估改用關聯式資料庫（如 Cloud SQL / Firebase）以支援更大規模的商家
