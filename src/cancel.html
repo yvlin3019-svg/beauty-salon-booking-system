@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; max-width: 480px; margin: 24px auto; padding: 0 16px; color: #333; }
+    h1 { font-size: 20px; margin-bottom: 4px; }
+    p.sub { color: #777; margin-top: 0; font-size: 13px; }
+    label { display: block; margin: 14px 0 6px; font-size: 14px; font-weight: 600; }
+    input {
+      width: 100%; padding: 10px; box-sizing: border-box;
+      border: 1px solid #ccc; border-radius: 8px; font-size: 15px;
+    }
+    .btn-primary {
+      margin-top: 14px; width: 100%; padding: 14px; background: #333; color: #fff;
+      border: none; border-radius: 8px; font-size: 16px; cursor: pointer;
+    }
+    .btn-primary:disabled { background: #aaa; cursor: not-allowed; }
+    .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+    .btn-cancel {
+      flex: 1; padding: 10px; background: #fdeaea; color: #b02a2a;
+      border: 1px solid #f0b7b7; border-radius: 8px; font-size: 14px; cursor: pointer;
+    }
+    .btn-modify {
+      flex: 1; padding: 10px; background: #eef3fd; color: #2a4fb0;
+      border: 1px solid #b7c9f0; border-radius: 8px; font-size: 14px; cursor: pointer;
+    }
+    .btn-modify:disabled, .btn-cancel:disabled {
+      opacity: 0.4; cursor: not-allowed;
+    }
+    .booking-card {
+      border: 1px solid #e2e2e2; border-radius: 10px; padding: 14px; margin-top: 14px;
+    }
+    .booking-card .row { font-size: 14px; margin: 3px 0; }
+    .booking-card .k { color: #888; display: inline-block; width: 78px; }
+    .modify-panel { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ddd; display: none; }
+    .modify-panel.open { display: block; }
+    .slots { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .slot-btn {
+      padding: 7px 12px; border: 1px solid #ccc; border-radius: 20px;
+      background: #fff; cursor: pointer; font-size: 13px;
+    }
+    .slot-btn.selected { background: #333; color: #fff; border-color: #333; }
+    #message { margin-top: 14px; padding: 12px; border-radius: 8px; font-size: 14px; display: none; }
+    #message.ok { background: #e6f4ea; color: #1e7e34; display: block; }
+    #message.err { background: #fdeaea; color: #b02a2a; display: block; }
+    .loading { color: #999; font-size: 13px; }
+    .cal-header { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+    .cal-header span { font-size: 14px; font-weight: 600; }
+    .cal-nav { background: none; border: none; font-size: 18px; padding: 4px 12px; cursor: pointer; color: #333; }
+    .cal-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+    .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; color: #888; margin-top: 8px; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 4px; }
+    .cal-day {
+      aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      border-radius: 6px; font-size: 11px; cursor: pointer; background: #fafafa; gap: 1px; text-align: center;
+    }
+    .cal-day .num { font-weight: 600; }
+    .cal-day .st { font-size: 8px; color: #1e7e34; }
+    .cal-day.empty { visibility: hidden; cursor: default; }
+    .cal-day.disabled { color: #ccc; cursor: not-allowed; background: transparent; }
+    .cal-day.disabled .st { color: #ccc; }
+    .cal-day.full .st { color: #b02a2a; }
+    .cal-day.selected { background: #333; color: #fff; }
+    .cal-day.selected .st { color: #fff; }
+    .coupon-box {
+      background: #f4f8ff; border: 1px solid #cddcf7; border-radius: 10px;
+      padding: 12px; font-size: 13px; line-height: 1.9;
+    }
+    .coupon-box .row { margin: 2px 0; }
+    .notice-box {
+      background: #faf7f2; border: 1px solid #e5ddd0; border-radius: 8px;
+      padding: 12px; font-size: 13px; line-height: 1.7; white-space: pre-wrap;
+      max-height: 220px; overflow-y: auto; color: #555; margin-top: 8px;
+    }
+    .agree-row { display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; font-size: 14px; }
+    .agree-row input { width: auto; margin-top: 3px; }
+  </style>
+</head>
+<body>
+  <h1>查詢／取消／修改預約</h1>
+  <p class="sub">輸入預約時填寫的電話，即可查詢您目前的預約，並自行取消或修改時段。</p>
+  <p class="sub" id="policyText">依規定：取消或改期須提前告知；改期有次數限制；取消後定金可保留一段時間內使用，詳細天數與次數依店家公告為準。</p>
+  <p class="sub"><a href="<?= bookUrl ?>" target="_top">＋ 我要新增一筆預約／返回預約畫面</a></p>
+
+  <label>電話</label>
+  <input type="tel" id="phone" placeholder="0912345678">
+  <button type="button" class="btn-primary" id="btnSearch">查詢我的預約</button>
+
+  <div id="couponArea" style="margin-top:14px;"></div>
+  <div id="resultArea"></div>
+  <div id="touchupArea" style="margin-top:14px;"></div>
+  <div id="message"></div>
+
+  <script>
+    let POLICY = { cancelModifyMinDays: 3, maxModifyCount: 1, depositHoldDays: 30 };
+
+    google.script.run.withSuccessHandler(cfg => {
+      POLICY = {
+        cancelModifyMinDays: cfg.cancelModifyMinDays,
+        maxModifyCount: cfg.maxModifyCount,
+        depositHoldDays: cfg.depositHoldDays,
+      };
+      document.getElementById('policyText').textContent =
+        `依規定：取消或改期須提前${POLICY.cancelModifyMinDays}天告知；改期僅限${POLICY.maxModifyCount}次；取消後若已付定金，可保留${POLICY.depositHoldDays}日內使用。`;
+    }).getBookingConfig();
+
+    document.getElementById('btnSearch').addEventListener('click', search);
+
+    function search() {
+      const phone = document.getElementById('phone').value.trim();
+      const resultArea = document.getElementById('resultArea');
+      if (!phone) {
+        showMessage(false, '請先輸入電話');
+        return;
+      }
+      resultArea.innerHTML = '<p class="loading">查詢中...</p>';
+      document.getElementById('message').style.display = 'none';
+      document.getElementById('couponArea').innerHTML = '<p class="loading">查詢優惠中...</p>';
+      document.getElementById('touchupArea').innerHTML = '';
+
+      google.script.run
+        .withSuccessHandler(renderBookings)
+        .withFailureHandler(err => { resultArea.innerHTML = ''; showMessage(false, '查詢失敗：' + err.message); })
+        .getMyUpcomingBookings(phone);
+
+      google.script.run
+        .withSuccessHandler(renderCoupons)
+        .withFailureHandler(() => { document.getElementById('couponArea').innerHTML = ''; })
+        .getMyCoupons(phone);
+
+      google.script.run
+        .withSuccessHandler(renderTouchupOptions)
+        .withFailureHandler(() => {})
+        .getTouchupEligibleBookings(phone);
+    }
+
+    function renderCoupons(coupons) {
+      const area = document.getElementById('couponArea');
+      if (!coupons.totalCount && (!coupons.categories || !coupons.categories.length)) {
+        area.innerHTML = '';
+        return;
+      }
+
+      let html = `<div class="coupon-box"><div class="row" style="font-weight:600;">共有 ${coupons.totalCount} 張優惠券可用</div>`;
+      (coupons.categories || []).forEach(cat => {
+        html += `<div class="row" style="margin-top:8px; font-weight:600;">${cat.name}優惠</div>`;
+        cat.items.forEach(item => {
+          html += `<div class="row">${item.name}：${item.status}</div>`;
+        });
+      });
+      html += '</div>';
+      area.innerHTML = html;
+    }
+
+    function renderTouchupOptions(items) {
+      const area = document.getElementById('touchupArea');
+      if (!items || !items.length) {
+        area.innerHTML = '';
+        return;
+      }
+
+      area.innerHTML = '<label>可以預約補睫</label>';
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'booking-card';
+        card.innerHTML = `
+          <div class="row"><span class="k">原項目</span>${item.mainItem}</div>
+          <div class="row"><span class="k">原日期</span>${item.apptStr}（${item.daysSince}天前）</div>
+          <div class="row"><span class="k">適用</span>${item.tierName}</div>
+          <button type="button" class="btn-modify" style="width:100%;">我要補睫</button>
+          <div class="touchup-panel" style="display:none; margin-top:12px; padding-top:12px; border-top:1px dashed #ddd;"></div>
+        `;
+        const btn = card.querySelector('.btn-modify');
+        const panel = card.querySelector('.touchup-panel');
+        let panelBuilt = false;
+        btn.addEventListener('click', () => {
+          const isOpen = panel.style.display !== 'none';
+          panel.style.display = isOpen ? 'none' : 'block';
+          if (!isOpen && !panelBuilt) {
+            panelBuilt = true;
+            buildTouchupPanel(panel, item);
+          }
+        });
+        area.appendChild(card);
+      });
+    }
+
+    function buildTouchupPanel(panel, item) {
+      panel.innerHTML = '<p class="loading">載入中...</p>';
+      google.script.run
+        .withSuccessHandler(config => renderTouchupForm(panel, item, config))
+        .withFailureHandler(() => { panel.innerHTML = '<p class="loading">載入失敗</p>'; })
+        .getBookingConfig();
+    }
+
+    function renderTouchupForm(panel, item, config) {
+      const category = config.categories.find(c => c.id === 'eyelash');
+      const name = item.name;
+
+      panel.innerHTML = `
+        <label id="tuNoticeTitle">${category.noticeTitle}</label>
+        <div class="notice-box">${category.noticeText}</div>
+        <div class="agree-row">
+          <input type="checkbox" class="tu-notice-agree">
+          <label style="margin:0; font-weight:400;">我已閱讀並同意上述術前注意事項</label>
+        </div>
+        <div class="cal-header">
+          <button type="button" class="tu-cal-prev cal-nav">‹</button>
+          <span class="tu-cal-month-label">－</span>
+          <button type="button" class="tu-cal-next cal-nav">›</button>
+        </div>
+        <div class="cal-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+        <div class="tu-cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-top:4px;"></div>
+        <label>選擇時段</label>
+        <div class="tu-slots slots"><span class="loading">請先選擇日期</span></div>
+        <label>備註</label>
+        <input type="text" class="tu-note" placeholder="有想跟店家說的都可以寫在這裡">
+        <button type="button" class="btn-primary tu-submit" disabled>確認送出補睫預約</button>
+      `;
+
+      let tuMonthOffset = 0;
+      let tuSelectedDate = null;
+      let tuSelectedTime = null;
+      const noticeCb = panel.querySelector('.tu-notice-agree');
+      const submitBtn = panel.querySelector('.tu-submit');
+      const calGrid = panel.querySelector('.tu-cal-grid');
+      const calLabel = panel.querySelector('.tu-cal-month-label');
+      const calPrev = panel.querySelector('.tu-cal-prev');
+      const calNext = panel.querySelector('.tu-cal-next');
+      const slotsDiv = panel.querySelector('.tu-slots');
+
+      function formatYMD(d) {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+
+      function updateSubmitState() {
+        submitBtn.disabled = !(noticeCb.checked && tuSelectedTime);
+      }
+      noticeCb.addEventListener('change', updateSubmitState);
+
+      function renderTuCalendar() {
+        const monthStart = new Date();
+        monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+        monthStart.setMonth(monthStart.getMonth() + tuMonthOffset);
+        const year = monthStart.getFullYear();
+        const month = monthStart.getMonth();
+        const firstWeekday = monthStart.getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        calLabel.textContent = `${year}年${month + 1}月`;
+        calPrev.disabled = tuMonthOffset <= 0;
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const maxDate = new Date(today); maxDate.setDate(maxDate.getDate() + (config.bookingWindowDays || 60));
+        calNext.disabled = new Date(year, month + 1, 1) > maxDate;
+
+        calGrid.innerHTML = '';
+        for (let i = 0; i < firstWeekday; i++) {
+          const e = document.createElement('div');
+          e.className = 'cal-day empty';
+          calGrid.appendChild(e);
+        }
+        for (let day = 1; day <= daysInMonth; day++) {
+          const cellDate = new Date(year, month, day);
+          const dateStr = formatYMD(cellDate);
+          const cell = document.createElement('div');
+          cell.className = 'cal-day';
+          const outOfRange = cellDate < today || cellDate > maxDate;
+          if (outOfRange) {
+            cell.classList.add('disabled');
+            cell.innerHTML = `<div class="num">${day}</div>`;
+          } else {
+            cell.innerHTML = `<div class="num">${day}</div>`;
+            cell.onclick = () => {
+              calGrid.querySelectorAll('.cal-day').forEach(c => c.classList.remove('selected'));
+              cell.classList.add('selected');
+              tuSelectedDate = dateStr;
+              tuSelectedTime = null;
+              updateSubmitState();
+              slotsDiv.innerHTML = '<span class="loading">查詢空檔中...</span>';
+              google.script.run
+                .withSuccessHandler(res => {
+                  if (res.status === 'tomorrow_blocked') {
+                    slotsDiv.innerHTML = '<span class="loading">明天不開放線上預約，如需預約請直接聯繫店家</span>';
+                    return;
+                  }
+                  if (res.status !== 'ok' || !(res.times || []).length) {
+                    slotsDiv.innerHTML = '<span class="loading">這天沒有空檔，請選其他日期</span>';
+                    return;
+                  }
+                  slotsDiv.innerHTML = '';
+                  res.times.forEach(t => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'slot-btn';
+                    b.textContent = t;
+                    b.onclick = () => {
+                      slotsDiv.querySelectorAll('.slot-btn').forEach(x => x.classList.remove('selected'));
+                      b.classList.add('selected');
+                      tuSelectedTime = t;
+                      updateSubmitState();
+                    };
+                    slotsDiv.appendChild(b);
+                  });
+                })
+                .withFailureHandler(() => { slotsDiv.innerHTML = '<span class="loading">查詢失敗</span>'; })
+                .getAvailableSlots(dateStr, item.tierId);
+            };
+          }
+          calGrid.appendChild(cell);
+        }
+      }
+      calPrev.addEventListener('click', () => { if (tuMonthOffset > 0) { tuMonthOffset--; renderTuCalendar(); } });
+      calNext.addEventListener('click', () => { tuMonthOffset++; renderTuCalendar(); });
+      renderTuCalendar();
+
+      submitBtn.addEventListener('click', () => {
+        submitBtn.disabled = true;
+        submitBtn.textContent = '送出中...';
+        google.script.run
+          .withSuccessHandler(res => {
+            if (res.success) {
+              showMessage(true, res.message);
+              search();
+            } else {
+              showMessage(false, res.message);
+              submitBtn.disabled = false;
+              submitBtn.textContent = '確認送出補睫預約';
+            }
+          })
+          .withFailureHandler(err => {
+            showMessage(false, '送出失敗：' + err.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = '確認送出補睫預約';
+          })
+          .submitTouchupBooking({
+            originalEventId: item.eventId,
+            name: item.name,
+            phone: document.getElementById('phone').value.trim(),
+            tierId: item.tierId,
+            date: tuSelectedDate,
+            time: tuSelectedTime,
+            noticeAgreed: noticeCb.checked,
+            note: panel.querySelector('.tu-note').value,
+          });
+      });
+    }
+
+    function renderBookings(bookings) {
+      const resultArea = document.getElementById('resultArea');
+      if (!bookings.length) {
+        resultArea.innerHTML = '<p class="loading">查無這支電話目前尚未到店的預約。</p>';
+        return;
+      }
+      resultArea.innerHTML = '';
+      bookings.forEach(b => {
+        const card = document.createElement('div');
+        card.className = 'booking-card';
+        const modifyNote = b.canModify
+          ? `（已改期 ${b.modifyCount}/${POLICY.maxModifyCount} 次）`
+          : `（改期次數已用完，如需再調整請聯繫店家）`;
+        const deadlineWarning = b.withinMinDays
+          ? `<div class="row" style="color:#b02a2a;">⚠ 已不足${POLICY.cancelModifyMinDays}天，無法線上自動取消／改期，請透過官方LINE聯繫店家</div>`
+          : '';
+        card.innerHTML = `
+          <div class="row"><span class="k">姓名</span>${b.name}</div>
+          <div class="row"><span class="k">項目</span>${b.category} / ${b.mainItem}</div>
+          <div class="row"><span class="k">時間</span>${b.apptStr}</div>
+          <div class="row" style="color:#999; font-size:12px;">${modifyNote}</div>
+          ${deadlineWarning}
+          <div class="btn-row">
+            <button type="button" class="btn-modify" ${(!b.canModify || b.withinMinDays) ? 'disabled' : ''}>修改時段</button>
+          </div>
+          <p class="sub" style="margin-top:8px;">如需取消預約，請直接私訊聯繫店家。</p>
+          <div class="modify-panel">
+            <div class="cal-header">
+              <button type="button" class="cal-prev cal-nav">‹</button>
+              <span class="cal-month-label">－</span>
+              <button type="button" class="cal-next cal-nav">›</button>
+            </div>
+            <div class="cal-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+            <div class="cal-grid"></div>
+            <label>選擇新時段</label>
+            <div class="slots"><span class="loading">請先選擇日期</span></div>
+            <button type="button" class="btn-primary btn-confirm-modify" disabled>確認修改時段</button>
+          </div>
+        `;
+
+        const btnModify = card.querySelector('.btn-modify');
+        const panel = card.querySelector('.modify-panel');
+        const calGrid = card.querySelector('.cal-grid');
+        const calMonthLabel = card.querySelector('.cal-month-label');
+        const calPrev = card.querySelector('.cal-prev');
+        const calNext = card.querySelector('.cal-next');
+        const slotsDiv = card.querySelector('.slots');
+        const btnConfirmModify = card.querySelector('.btn-confirm-modify');
+
+        let cardMonthOffset = 0;
+        let cardDayStatusCache = {};
+        let cardSelectedDate = null;
+        let cardSelectedTime = null;
+        let calendarLoaded = false;
+
+        function formatYMD(d) {
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function renderCardCalendar() {
+          const monthStart = new Date();
+          monthStart.setDate(1);
+          monthStart.setHours(0, 0, 0, 0);
+          monthStart.setMonth(monthStart.getMonth() + cardMonthOffset);
+          const year = monthStart.getFullYear();
+          const month = monthStart.getMonth();
+          const firstWeekday = monthStart.getDay();
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+          calMonthLabel.textContent = `${year}年${month + 1}月`;
+          calPrev.disabled = cardMonthOffset <= 0;
+
+          const today = new Date(); today.setHours(0, 0, 0, 0);
+          const maxDate = new Date(today);
+          maxDate.setDate(maxDate.getDate() + 90);
+          const nextMonthStart = new Date(year, month + 1, 1);
+          calNext.disabled = nextMonthStart > maxDate;
+
+          calGrid.innerHTML = '';
+          for (let i = 0; i < firstWeekday; i++) {
+            const empty = document.createElement('div');
+            empty.className = 'cal-day empty';
+            calGrid.appendChild(empty);
+          }
+
+          const datesToFetch = [];
+          for (let day = 1; day <= daysInMonth; day++) {
+            const cellDate = new Date(year, month, day);
+            const dateStr = formatYMD(cellDate);
+            const cell = document.createElement('div');
+            cell.className = 'cal-day';
+            cell.dataset.date = dateStr;
+
+            const outOfRange = cellDate < today || cellDate > maxDate;
+            if (outOfRange) {
+              cell.classList.add('disabled');
+              cell.innerHTML = `<div class="num">${day}</div>`;
+            } else if (cardDayStatusCache[dateStr]) {
+              applyCardDayStatus(cell, cardDayStatusCache[dateStr]);
+            } else {
+              cell.innerHTML = `<div class="num">${day}</div><div class="st">…</div>`;
+              datesToFetch.push(dateStr);
+            }
+            calGrid.appendChild(cell);
+          }
+
+          if (datesToFetch.length) {
+            const startStr = datesToFetch[0];
+            const endStr = datesToFetch[datesToFetch.length - 1];
+            google.script.run
+              .withSuccessHandler(days => {
+                days.forEach(d => { cardDayStatusCache[d.date] = d; });
+                days.forEach(d => {
+                  const cell = calGrid.querySelector(`.cal-day[data-date="${d.date}"]`);
+                  if (cell) applyCardDayStatus(cell, d);
+                });
+              })
+              .withFailureHandler(() => {})
+              .getAvailabilityForRangeByLabel(b.category, b.mainItem, startStr, endStr, b.eventId);
+          }
+        }
+
+        function applyCardDayStatus(cell, d) {
+          const isFull = d.status === 'ok' && d.slotCount === 0;
+          const disabled = d.status === 'unset' || d.status === 'closed' || isFull;
+          cell.classList.toggle('disabled', disabled);
+          cell.classList.toggle('full', isFull);
+
+          let label;
+          if (d.status === 'unset') label = '未開放';
+          else if (d.status === 'closed') label = '公休';
+          else if (isFull) label = '已滿';
+          else label = `${d.slotCount}時段`;
+
+          const day = Number(d.date.split('-')[2]);
+          cell.innerHTML = `<div class="num">${day}</div><div class="st">${label}</div>`;
+
+          if (!disabled) {
+            cell.onclick = () => {
+              calGrid.querySelectorAll('.cal-day').forEach(c => c.classList.remove('selected'));
+              cell.classList.add('selected');
+              cardSelectedDate = d.date;
+              cardSelectedTime = null;
+              btnConfirmModify.disabled = true;
+              loadCardSlots();
+            };
+          }
+        }
+
+        function loadCardSlots() {
+          if (!cardSelectedDate) { slotsDiv.innerHTML = '<span class="loading">請先選擇日期</span>'; return; }
+          slotsDiv.innerHTML = '<span class="loading">查詢空檔中...</span>';
+          google.script.run
+            .withSuccessHandler(res => renderModifySlots(res))
+            .withFailureHandler(() => { slotsDiv.innerHTML = '<span class="loading">查詢失敗，請重新選擇</span>'; })
+            .getAvailableSlotsForModify(cardSelectedDate, b.category, b.mainItem, b.eventId);
+        }
+
+        function renderModifySlots(res) {
+          if (res.status === 'tomorrow_blocked') { slotsDiv.innerHTML = '<span class="loading">明天不開放線上改期，如需調整請直接聯繫店家</span>'; return; }
+          if (res.status === 'unset') { slotsDiv.innerHTML = '<span class="loading">這天店家尚未開放預約</span>'; return; }
+          if (res.status === 'closed') { slotsDiv.innerHTML = '<span class="loading">這天公休</span>'; return; }
+          const times = res.times || [];
+          if (!times.length) { slotsDiv.innerHTML = '<span class="loading">這天沒有空檔了</span>'; return; }
+          slotsDiv.innerHTML = '';
+          times.forEach(t => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'slot-btn';
+            btn.textContent = t;
+            btn.onclick = () => {
+              slotsDiv.querySelectorAll('.slot-btn').forEach(x => x.classList.remove('selected'));
+              btn.classList.add('selected');
+              cardSelectedTime = t;
+              btnConfirmModify.disabled = false;
+            };
+            slotsDiv.appendChild(btn);
+          });
+        }
+
+        calPrev.addEventListener('click', () => {
+          if (cardMonthOffset <= 0) return;
+          cardMonthOffset--;
+          renderCardCalendar();
+        });
+        calNext.addEventListener('click', () => {
+          cardMonthOffset++;
+          renderCardCalendar();
+        });
+
+        btnModify.addEventListener('click', () => {
+          panel.classList.toggle('open');
+          if (panel.classList.contains('open') && !calendarLoaded) {
+            calendarLoaded = true;
+            renderCardCalendar();
+          }
+        });
+
+        btnConfirmModify.addEventListener('click', () => {
+          if (!cardSelectedTime || !cardSelectedDate) return;
+          const phone = document.getElementById('phone').value.trim();
+          btnConfirmModify.disabled = true;
+          btnConfirmModify.textContent = '修改中...';
+          google.script.run
+            .withSuccessHandler(res => {
+              if (res.success) {
+                showMessage(true, res.message);
+                search();
+              } else {
+                showMessage(false, res.message);
+                btnConfirmModify.disabled = false;
+                btnConfirmModify.textContent = '確認修改時段';
+              }
+            })
+            .withFailureHandler(err => {
+              showMessage(false, '修改失敗：' + err.message);
+              btnConfirmModify.disabled = false;
+              btnConfirmModify.textContent = '確認修改時段';
+            })
+            .modifyBookingByCustomer(b.eventId, phone, cardSelectedDate, cardSelectedTime);
+        });
+
+        resultArea.appendChild(card);
+      });
+    }
+
+    document.getElementById('phone').addEventListener('input', function () {
+      const filtered = this.value.replace(/[^0-9]/g, '');
+      if (filtered !== this.value) this.value = filtered;
+    });
+
+    function showMessage(ok, text) {
+      const msg = document.getElementById('message');
+      msg.className = ok ? 'ok' : 'err';
+      msg.textContent = text;
+    }
+  </script>
+</body>
+</html>

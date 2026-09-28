@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; max-width: 480px; margin: 24px auto; padding: 0 16px; color: #333; }
+    h1 { font-size: 20px; margin-bottom: 4px; }
+    p.sub { color: #777; margin-top: 0; font-size: 13px; }
+    label { display: block; margin: 14px 0 6px; font-size: 14px; font-weight: 600; }
+    label.sub-label { font-size: 13px; font-weight: 500; color: #555; margin-top: 10px; }
+    input, select, textarea {
+      width: 100%; padding: 10px; box-sizing: border-box;
+      border: 1px solid #ccc; border-radius: 8px; font-size: 15px;
+    }
+    input[readonly] { background: #f4f4f4; color: #666; }
+    textarea { resize: vertical; min-height: 60px; }
+    .slots { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .slot-btn {
+      padding: 8px 14px; border: 1px solid #ccc; border-radius: 20px;
+      background: #fff; cursor: pointer; font-size: 14px;
+    }
+    .slot-btn.selected { background: #333; color: #fff; border-color: #333; }
+    .slot-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-primary {
+      margin-top: 20px; width: 100%; padding: 14px; background: #333; color: #fff;
+      border: none; border-radius: 8px; font-size: 16px; cursor: pointer;
+    }
+    .btn-primary:disabled { background: #aaa; cursor: not-allowed; }
+    .btn-secondary {
+      margin-top: 10px; width: 100%; padding: 12px; background: #fff; color: #333;
+      border: 1px solid #333; border-radius: 8px; font-size: 15px; cursor: pointer;
+    }
+    #message { margin-top: 14px; padding: 12px; border-radius: 8px; font-size: 14px; display: none; }
+    #message.ok { background: #e6f4ea; color: #1e7e34; display: block; }
+    #message.err { background: #fdeaea; color: #b02a2a; display: block; }
+    .loading { color: #999; font-size: 13px; }
+    .section-block { margin-top: 22px; padding-top: 14px; border-top: 1px dashed #ddd; }
+    .checkbox-row { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-weight: 400; font-size: 14px; }
+    .checkbox-row input { width: auto; }
+    .notice-box {
+      background: #faf7f2; border: 1px solid #e5ddd0; border-radius: 8px;
+      padding: 12px; font-size: 13px; line-height: 1.7; white-space: pre-wrap;
+      max-height: 320px; overflow-y: auto; color: #555;
+    }
+    .agree-row { display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; font-size: 14px; }
+    .agree-row input { width: auto; margin-top: 3px; }
+    .price-hint { font-size: 12px; color: #999; margin-top: 2px; }
+    .step { display: none; }
+    .step.active { display: block; }
+    .summary-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }
+    .summary-table td { padding: 8px 4px; border-bottom: 1px solid #eee; vertical-align: top; }
+    .summary-table td.k { color: #888; width: 92px; white-space: nowrap; }
+    .deposit-box {
+      background: #fff6e9; border: 1px solid #f0d9ab; border-radius: 8px;
+      padding: 14px; font-size: 14px; line-height: 1.8; margin-top: 14px;
+    }
+    .deposit-box .amount { font-size: 20px; font-weight: 700; color: #b06a00; }
+    .deposit-box .deadline { color: #b02a2a; font-weight: 600; }
+    .bank-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #e5d3a0; }
+    .line-bind-box {
+      background: #eafaf0; border: 1px solid #b7e8c8; border-radius: 8px;
+      padding: 14px; font-size: 14px; line-height: 1.8; margin-top: 14px; text-align: center;
+    }
+    .line-bind-box a.btn-line {
+      display: inline-block; margin-top: 10px; padding: 10px 20px; background: #06c755;
+      color: #fff; border-radius: 20px; text-decoration: none; font-weight: 600;
+    }
+    .option-cards { display: flex; gap: 12px; margin-top: 10px; }
+    .option-card {
+      flex: 1; padding: 22px 10px; text-align: center; font-size: 17px; font-weight: 600;
+      background: #fff; border: 1.5px solid #333; border-radius: 12px; cursor: pointer; color: #333;
+    }
+    .option-card:active { background: #333; color: #fff; }
+    .option-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .option-pill {
+      padding: 10px 16px; border: 1px solid #ccc; border-radius: 22px; background: #fff;
+      font-size: 14px; cursor: pointer; color: #333;
+    }
+    .option-pill.selected { background: #333; color: #fff; border-color: #333; }
+    .cal-header { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+    .cal-header span { font-size: 15px; font-weight: 600; }
+    .cal-nav { background: none; border: none; font-size: 20px; padding: 4px 14px; cursor: pointer; color: #333; }
+    .cal-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+    .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 12px; color: #888; margin-top: 10px; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 4px; }
+    .cal-day {
+      aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      border-radius: 8px; font-size: 13px; cursor: pointer; background: #fafafa; gap: 2px; text-align: center;
+    }
+    .cal-day .num { font-weight: 600; }
+    .cal-day .st { font-size: 9px; color: #1e7e34; }
+    .cal-day.empty { visibility: hidden; cursor: default; }
+    .cal-day.disabled { color: #ccc; cursor: not-allowed; background: transparent; }
+    .cal-day.disabled .st { color: #ccc; }
+    .cal-day.full .st { color: #b02a2a; }
+    .cal-day.selected { background: #333; color: #fff; }
+    .cal-day.selected .st { color: #fff; }
+  </style>
+</head>
+<body>
+  <h1>線上預約</h1>
+  <p class="sub">請依序完成以下步驟，時段是即時更新的，被預約走的時段會自動消失。</p>
+  <p class="sub">已經預約過了嗎？<a href="<?= cancelUrl ?>" target="_top">查詢／取消／修改我的預約</a></p>
+
+  <!-- Step 0：工作室總須知 -->
+  <div id="step-studioNotice" class="step active">
+    <label id="studioNoticeTitle">工作室預約須知</label>
+    <div id="studioNoticeText" class="notice-box"><span class="loading">載入中...</span></div>
+    <div class="agree-row">
+      <input type="checkbox" id="studioNoticeAgree">
+      <label for="studioNoticeAgree" style="margin:0; font-weight:400;">我已閱讀並同意上述工作室預約須知</label>
+    </div>
+    <button type="button" class="btn-primary" id="btnStudioNext" disabled>下一步：選擇服務項目</button>
+  </div>
+
+  <!-- Step 1：選分類（大按鈕，點了直接進下一步；隱藏的select只當狀態載體，讓既有邏輯不用改） -->
+  <div id="step-category" class="step">
+    <label>服務分類 *</label>
+    <div id="categoryButtons" class="option-cards"></div>
+    <select id="categoryId" required style="display:none;">
+      <option value="">請選擇</option>
+    </select>
+  </div>
+
+  <!-- Step 2：分類專屬術前注意事項 -->
+  <div id="step-categoryNotice" class="step">
+    <label id="noticeTitle">術前注意事項</label>
+    <div id="noticeText" class="notice-box"></div>
+    <div class="agree-row">
+      <input type="checkbox" id="noticeAgree">
+      <label for="noticeAgree" style="margin:0; font-weight:400;">我已閱讀並同意上述術前注意事項</label>
+    </div>
+    <button type="button" class="btn-primary" id="btnNoticeNext" disabled>下一步：填寫預約資料</button>
+    <button type="button" class="btn-secondary" id="btnNoticeBack">返回上一頁，重新選擇分類</button>
+  </div>
+
+  <!-- Step 3：填寫表單 -->
+  <div id="step-details" class="step">
+    <label>電話 *</label>
+    <input type="tel" id="phone" required placeholder="0912345678" inputmode="numeric">
+    <div id="returningCustomerHint" class="price-hint" style="display:none;">已為您帶入之前留下的資料，如有錯誤可以直接修改</div>
+
+    <label>姓名 *</label>
+    <input type="text" id="name" required>
+
+    <label>生日 *</label>
+    <input type="date" id="birthday" max="" required>
+    <script>
+      (function () {
+        var todayStr = new Date().toISOString().split('T')[0];
+        var input = document.getElementById('birthday');
+        input.max = todayStr;
+        input.addEventListener('change', function () {
+          if (this.value && this.value > todayStr) {
+            alert('生日不能選未來的日期，請重新選擇');
+            this.value = '';
+          }
+        });
+      })();
+    </script>
+
+    <div id="referralBlock" style="display:none;">
+      <label>您是從哪裡知道我們的？（選填）</label>
+      <select id="referralSource">
+        <option value="">請選擇</option>
+      </select>
+      <input type="text" id="referralDetail" style="display:none; margin-top:8px;" placeholder="方便的話可以補充，例如介紹人姓名">
+    </div>
+
+    <div id="mainItemBlock">
+      <label>主要項目 *</label>
+      <select id="mainItemId" required></select>
+    </div>
+
+    <div id="addonBlock"></div>
+
+    <div id="discountBlock" class="section-block" style="display:none;">
+      <label>優惠項目</label>
+      <div id="discountArea"></div>
+    </div>
+
+    <div class="section-block" id="dateTimeBlock">
+      <label>預約日期 *</label>
+      <div class="cal-header">
+        <button type="button" id="calPrev" class="cal-nav">‹</button>
+        <span id="calMonthLabel">－</span>
+        <button type="button" id="calNext" class="cal-nav">›</button>
+      </div>
+      <div class="cal-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+      <div id="calGrid" class="cal-grid"><span class="loading">請先選擇主要項目</span></div>
+
+      <label>可預約時段 *</label>
+      <div id="slots" class="slots"><span class="loading">請先選擇日期</span></div>
+    </div>
+
+    <label>備註</label>
+    <textarea id="note" placeholder="有任何想跟店家說的都可以寫在這裡"></textarea>
+
+    <button type="button" class="btn-primary" id="btnReview" disabled>下一步：確認預約內容</button>
+    <button type="button" class="btn-secondary" id="btnDetailsBack">返回上一頁</button>
+  </div>
+
+  <!-- Step 4：最終確認 -->
+  <div id="step-confirm" class="step">
+    <label>請確認以下預約內容</label>
+    <table class="summary-table" id="summaryTable"></table>
+    <button type="button" class="btn-primary" id="btnSubmitFinal">確認送出預約</button>
+    <button type="button" class="btn-secondary" id="btnBackToEdit">返回修改</button>
+  </div>
+
+  <!-- Step 5：送出結果 -->
+  <div id="step-result" class="step">
+    <div id="resultMessage"></div>
+    <div id="depositBlock" style="display:none;"></div>
+    <div id="lineBindBlock" style="display:none;"></div>
+    <button type="button" class="btn-primary" id="btnBookAnother">再預約一筆</button>
+    <p class="sub" style="margin-top:18px;">之後如需查詢、取消或修改預約，請點：<a href="<?= cancelUrl ?>" target="_top">查詢／取消／修改我的預約</a></p>
+  </div>
+
+  <div id="message"></div>
+
+  <script>
+    let CONFIG = null;
+    const PRESET_CATEGORY = '<?= presetCategory ?>';
+    let currentCategory = null;
+    let selectedTime = null;
+    let selectedDate = null;
+    let calendarMonthOffset = 0;
+    let dayStatusCache = {};
+
+    google.script.run.withSuccessHandler(initConfig).getBookingConfig();
+
+    function initConfig(config) {
+      CONFIG = config;
+
+      document.getElementById('studioNoticeTitle').textContent = config.studioNotice.title;
+      document.getElementById('studioNoticeText').textContent = config.studioNotice.text;
+
+      const catSelect = document.getElementById('categoryId');
+      const catButtons = document.getElementById('categoryButtons');
+      config.categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.id;
+        opt.textContent = cat.name;
+        catSelect.appendChild(opt);
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'option-card';
+        btn.textContent = cat.name;
+        btn.addEventListener('click', () => {
+          catSelect.value = cat.id;
+          onCategoryChange();
+        });
+        catButtons.appendChild(btn);
+      });
+
+      const referralSelect = document.getElementById('referralSource');
+      (config.referralSources || []).forEach(src => {
+        const opt = document.createElement('option');
+        opt.value = src;
+        opt.textContent = src;
+        referralSelect.appendChild(opt);
+      });
+    }
+
+    function showStep(id) {
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ---------- Step 0：工作室總須知 ----------
+    document.getElementById('studioNoticeAgree').addEventListener('change', function () {
+      document.getElementById('btnStudioNext').disabled = !this.checked;
+    });
+    document.getElementById('btnStudioNext').addEventListener('click', function () {
+      if (PRESET_CATEGORY && CONFIG.categories.some(c => c.id === PRESET_CATEGORY)) {
+        document.getElementById('categoryId').value = PRESET_CATEGORY;
+        onCategoryChange();
+      } else {
+        showStep('step-category');
+      }
+    });
+
+    // ---------- Step 1：選分類 ----------
+    document.getElementById('categoryId').addEventListener('change', onCategoryChange);
+
+    function onCategoryChange() {
+      const catId = document.getElementById('categoryId').value;
+      currentCategory = CONFIG.categories.find(c => c.id === catId) || null;
+      if (!currentCategory) return;
+
+      selectedTime = null;
+      document.getElementById('noticeAgree').checked = false;
+      document.getElementById('btnNoticeNext').disabled = true;
+      document.getElementById('noticeTitle').textContent = currentCategory.noticeTitle || '術前注意事項';
+      document.getElementById('noticeText').textContent = currentCategory.noticeText || '';
+
+      buildMainItemAndAddons();
+      showStep('step-categoryNotice');
+    }
+
+    function buildMainItemAndAddons() {
+      const mainSelect = document.getElementById('mainItemId');
+      const addonBlock = document.getElementById('addonBlock');
+      const discountBlock = document.getElementById('discountBlock');
+      const discountArea = document.getElementById('discountArea');
+
+      addonBlock.innerHTML = '';
+      discountArea.innerHTML = '';
+      document.getElementById('slots').innerHTML = '<span class="loading">請先選擇日期</span>';
+      selectedDate = null;
+
+      mainSelect.innerHTML = '';
+      currentCategory.mainItems.filter(item => !item.refillOnly).forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        const priceText = item.price === null ? (item.priceNote || '時價') : ('NTD.' + item.price);
+        opt.textContent = `${item.name}（${priceText}）`;
+        mainSelect.appendChild(opt);
+      });
+
+      (currentCategory.addonGroups || []).forEach(group => {
+        const wrap = document.createElement('div');
+        const lbl = document.createElement('label');
+        lbl.className = 'sub-label';
+        lbl.textContent = group.label;
+        wrap.appendChild(lbl);
+
+        const sel = document.createElement('select');
+        sel.dataset.groupId = group.groupId;
+        sel.className = 'addon-select';
+        group.options.forEach(opt => {
+          const o = document.createElement('option');
+          o.value = opt.id;
+          o.textContent = opt.name;
+          sel.appendChild(o);
+        });
+
+        if (group.displayAs === 'buttons') {
+          // 用膠囊按鈕呈現，隱藏的select只當狀態載體，讓後面收集資料的邏輯不用改
+          sel.style.display = 'none';
+          const pills = document.createElement('div');
+          pills.className = 'option-pills';
+          group.options.forEach((opt, idx) => {
+            const pill = document.createElement('button');
+            pill.type = 'button';
+            pill.className = 'option-pill' + (idx === 0 ? ' selected' : '');
+            pill.textContent = opt.name;
+            pill.addEventListener('click', () => {
+              sel.value = opt.id;
+              pills.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
+              pill.classList.add('selected');
+            });
+            pills.appendChild(pill);
+          });
+          wrap.appendChild(pills);
+        }
+
+        wrap.appendChild(sel);
+        addonBlock.appendChild(wrap);
+      });
+
+      if (currentCategory.discounts && currentCategory.discounts.length) {
+        discountBlock.style.display = 'block';
+        if (currentCategory.discountMode === 'multi') {
+          currentCategory.discounts.forEach(d => {
+            const row = document.createElement('div');
+            row.className = 'checkbox-row';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = d.id;
+            cb.className = 'discount-checkbox';
+            cb.id = 'discount_' + d.id;
+            const lbl = document.createElement('label');
+            lbl.setAttribute('for', cb.id);
+            lbl.style.fontWeight = '400';
+            lbl.style.margin = '0';
+            lbl.textContent = `${d.name}（NTD.${d.price}）`;
+            row.appendChild(cb);
+            row.appendChild(lbl);
+            discountArea.appendChild(row);
+
+            cb.addEventListener('change', updateReferrerPhoneVisibility);
+          });
+          const stackHint = document.createElement('div');
+          stackHint.className = 'price-hint';
+          stackHint.textContent = '以上優惠可疊加使用';
+          discountArea.appendChild(stackHint);
+        } else {
+          const sel = document.createElement('select');
+          sel.id = 'discountSingleSelect';
+          const noneOpt = document.createElement('option');
+          noneOpt.value = '';
+          noneOpt.textContent = '無';
+          sel.appendChild(noneOpt);
+          currentCategory.discounts.forEach(d => {
+            const o = document.createElement('option');
+            o.value = d.id;
+            o.textContent = `${d.name}（NTD.${d.price}）`;
+            sel.appendChild(o);
+          });
+          discountArea.appendChild(sel);
+          const hint = document.createElement('div');
+          hint.className = 'price-hint';
+          hint.textContent = '折扣僅可擇一';
+          discountArea.appendChild(hint);
+
+          sel.addEventListener('change', updateReferrerPhoneVisibility);
+        }
+
+        const referrerBlock = document.createElement('div');
+        referrerBlock.id = 'referrerPhoneBlock';
+        referrerBlock.style.display = 'none';
+        referrerBlock.style.marginTop = '10px';
+        referrerBlock.innerHTML = `
+          <label class="sub-label">對方電話 *（選擇這項優惠時必填）</label>
+          <input type="tel" id="referrerPhone" inputmode="numeric" placeholder="對方的電話號碼">
+        `;
+        discountArea.appendChild(referrerBlock);
+        document.getElementById('referrerPhone').addEventListener('input', function () {
+          const filtered = this.value.replace(/[^0-9]/g, '');
+          if (filtered !== this.value) this.value = filtered;
+          updateReviewButtonState();
+        });
+
+        applyDiscountAvailability();
+        applyMainItemRestrictedDiscounts();
+      } else {
+        discountBlock.style.display = 'none';
+      }
+
+      initCalendar();
+    }
+
+    // 依目前勾選/選取的優惠，判斷要不要顯示「對方電話」欄位
+    function updateReferrerPhoneVisibility() {
+      if (!currentCategory) return;
+      let needsReferrerPhone = false;
+      if (currentCategory.discountMode === 'multi') {
+        document.querySelectorAll('.discount-checkbox:checked').forEach(cb => {
+          const d = currentCategory.discounts.find(x => x.id === cb.value);
+          if (d && (d.requiresReferrerPhone || d.requiresCompanionPhone)) needsReferrerPhone = true;
+        });
+      } else {
+        const sel = document.getElementById('discountSingleSelect');
+        if (sel && sel.value) {
+          const d = currentCategory.discounts.find(x => x.id === sel.value);
+          if (d && (d.requiresReferrerPhone || d.requiresCompanionPhone)) needsReferrerPhone = true;
+        }
+      }
+      document.getElementById('referrerPhoneBlock').style.display = needsReferrerPhone ? 'block' : 'none';
+      updateReviewButtonState();
+    }
+
+    // 限定特定主要項目才能用的優惠（例如續做霧眉優惠僅限無創淡色），依目前選的主要項目動態灰掉/恢復
+    function applyMainItemRestrictedDiscounts() {
+      if (!currentCategory) return;
+      const mainItemId = document.getElementById('mainItemId').value;
+
+      currentCategory.discounts.forEach(d => {
+        if (!d.restrictedToMainItems) return;
+        const allowed = d.restrictedToMainItems.indexOf(mainItemId) !== -1;
+
+        if (currentCategory.discountMode === 'multi') {
+          const cb = document.getElementById('discount_' + d.id);
+          if (!cb) return;
+          cb.disabled = !allowed;
+          if (!allowed) cb.checked = false;
+        } else {
+          const sel = document.getElementById('discountSingleSelect');
+          if (!sel) return;
+          const opt = Array.from(sel.options).find(o => o.value === d.id);
+          if (!opt) return;
+          opt.disabled = !allowed;
+          if (!allowed && sel.value === d.id) sel.value = '';
+        }
+      });
+      updateReferrerPhoneVisibility();
+    }
+
+    // 檢查優惠使用紀錄，把已經用過（且非例外）的選項灰掉
+    function applyDiscountAvailability() {
+      const phone = document.getElementById('phone').value.trim();
+      if (!phone || !currentCategory) return;
+      const mainItemId = document.getElementById('mainItemId').value;
+      google.script.run
+        .withSuccessHandler(availability => {
+          if (currentCategory.discountMode === 'multi') {
+            document.querySelectorAll('.discount-checkbox').forEach(cb => {
+              const a = availability[cb.value];
+              if (a && !a.available) {
+                cb.disabled = true;
+                cb.checked = false;
+                const lbl = document.querySelector(`label[for="${cb.id}"]`);
+                if (lbl && !lbl.textContent.includes('已使用過') && !lbl.textContent.includes('不適用')) lbl.textContent += `（${a.reason || '已使用過'}）`;
+              }
+            });
+          } else {
+            const sel = document.getElementById('discountSingleSelect');
+            if (sel) {
+              Array.from(sel.options).forEach(opt => {
+                const a = availability[opt.value];
+                if (a && !a.available) {
+                  opt.disabled = true;
+                  if (!opt.textContent.includes('已使用過') && !opt.textContent.includes('不適用')) opt.textContent += `（${a.reason || '已使用過'}）`;
+                }
+              });
+            }
+          }
+        })
+        .withFailureHandler(() => {})
+        .getDiscountAvailability(phone, currentCategory.id, mainItemId);
+    }
+
+    // ---------- Step 2：分類注意事項 ----------
+    document.getElementById('noticeAgree').addEventListener('change', function () {
+      document.getElementById('btnNoticeNext').disabled = !this.checked;
+    });
+    document.getElementById('btnNoticeNext').addEventListener('click', function () {
+      showStep('step-details');
+    });
+    document.getElementById('btnNoticeBack').addEventListener('click', function () {
+      showStep('step-category');
+    });
+
+    // ---------- Step 3：月曆選日期 ----------
+    document.getElementById('mainItemId').addEventListener('change', () => {
+      applyMainItemRestrictedDiscounts();
+      applyDiscountAvailability();
+      initCalendar();
+    });
+    document.getElementById('calPrev').addEventListener('click', () => {
+      if (calendarMonthOffset <= 0) return;
+      calendarMonthOffset--;
+      renderCalendarMonth();
+    });
+    document.getElementById('calNext').addEventListener('click', () => {
+      calendarMonthOffset++;
+      renderCalendarMonth();
+    });
+
+    function initCalendar() {
+      calendarMonthOffset = 0;
+      selectedDate = null;
+      selectedTime = null;
+      dayStatusCache = {};
+      document.getElementById('slots').innerHTML = '<span class="loading">請先選擇日期</span>';
+      updateReviewButtonState();
+      renderCalendarMonth();
+    }
+
+    function getDisplayMonthStart() {
+      const base = new Date();
+      base.setDate(1);
+      base.setHours(0, 0, 0, 0);
+      base.setMonth(base.getMonth() + calendarMonthOffset);
+      return base;
+    }
+
+    function formatYMD(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function renderCalendarMonth() {
+      const mainItemId = document.getElementById('mainItemId').value;
+      const grid = document.getElementById('calGrid');
+      if (!mainItemId) {
+        grid.innerHTML = '<span class="loading">請先選擇主要項目</span>';
+        return;
+      }
+
+      const monthStart = getDisplayMonthStart();
+      const year = monthStart.getFullYear();
+      const month = monthStart.getMonth();
+      const firstWeekday = monthStart.getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      document.getElementById('calMonthLabel').textContent = `${year}年${month + 1}月`;
+      document.getElementById('calPrev').disabled = calendarMonthOffset <= 0;
+
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const maxDate = new Date(today);
+      maxDate.setDate(maxDate.getDate() + (CONFIG.bookingWindowDays || 60));
+
+      const nextMonthStart = new Date(year, month + 1, 1);
+      document.getElementById('calNext').disabled = nextMonthStart > maxDate;
+
+      grid.innerHTML = '';
+      for (let i = 0; i < firstWeekday; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'cal-day empty';
+        grid.appendChild(empty);
+      }
+
+      const datesToFetch = [];
+      for (let day = 1; day <= daysInMonth; day++) {
+        const cellDate = new Date(year, month, day);
+        const dateStr = formatYMD(cellDate);
+        const cell = document.createElement('div');
+        cell.className = 'cal-day';
+        cell.dataset.date = dateStr;
+
+        const outOfRange = cellDate < today || cellDate > maxDate;
+        if (outOfRange) {
+          cell.classList.add('disabled');
+          cell.innerHTML = `<div class="num">${day}</div>`;
+        } else if (dayStatusCache[dateStr]) {
+          cell.innerHTML = `<div class="num">${day}</div>`;
+          applyDayStatus(cell, dayStatusCache[dateStr]);
+        } else {
+          cell.innerHTML = `<div class="num">${day}</div><div class="st">…</div>`;
+          datesToFetch.push(dateStr);
+        }
+        grid.appendChild(cell);
+      }
+
+      if (datesToFetch.length) {
+        const startStr = datesToFetch[0];
+        const endStr = datesToFetch[datesToFetch.length - 1];
+        google.script.run
+          .withSuccessHandler(days => {
+            days.forEach(d => { dayStatusCache[d.date] = d; });
+            days.forEach(d => {
+              const cell = grid.querySelector(`.cal-day[data-date="${d.date}"]`);
+              if (cell) applyDayStatus(cell, d);
+            });
+          })
+          .withFailureHandler(() => {})
+          .getAvailabilityForRange(mainItemId, startStr, endStr);
+      }
+    }
+
+    function applyDayStatus(cell, d) {
+      const isFull = d.status === 'ok' && d.slotCount === 0;
+      const disabled = d.status === 'unset' || d.status === 'closed' || d.status === 'tomorrow_blocked' || isFull;
+      cell.classList.toggle('disabled', disabled);
+      cell.classList.toggle('full', isFull);
+
+      let label;
+      if (d.status === 'tomorrow_blocked') label = '明日不開放';
+      else if (d.status === 'unset') label = '未開放';
+      else if (d.status === 'closed') label = '公休';
+      else if (isFull) label = '已滿';
+      else label = `${d.slotCount}時段`;
+
+      const day = Number(d.date.split('-')[2]);
+      cell.innerHTML = `<div class="num">${day}</div><div class="st">${label}</div>`;
+
+      if (!disabled) {
+        cell.onclick = () => {
+          document.querySelectorAll('.cal-day').forEach(c => c.classList.remove('selected'));
+          cell.classList.add('selected');
+          selectedDate = d.date;
+          selectedTime = null;
+          updateReviewButtonState();
+          loadSlotsForSelectedDate();
+        };
+      }
+    }
+
+    function loadSlotsForSelectedDate() {
+      const mainItemId = document.getElementById('mainItemId').value;
+      const slotsDiv = document.getElementById('slots');
+      if (!mainItemId || !selectedDate) {
+        slotsDiv.innerHTML = '<span class="loading">請先選擇日期</span>';
+        return;
+      }
+      slotsDiv.innerHTML = '<span class="loading">查詢空檔中...</span>';
+      google.script.run
+        .withSuccessHandler(res => renderSlots(res))
+        .withFailureHandler(() => { slotsDiv.innerHTML = '<span class="loading">查詢失敗，請重新選擇</span>'; })
+        .getAvailableSlots(selectedDate, mainItemId);
+    }
+
+    function renderSlots(res) {
+      const slotsDiv = document.getElementById('slots');
+      if (res.status === 'tomorrow_blocked') {
+        slotsDiv.innerHTML = '<span class="loading">明天不開放線上預約，如需預約請直接聯繫店家</span>';
+        return;
+      }
+      if (res.status === 'unset') {
+        slotsDiv.innerHTML = '<span class="loading">這天店家尚未開放預約，請透過官方LINE詢問空檔</span>';
+        return;
+      }
+      if (res.status === 'closed') {
+        slotsDiv.innerHTML = '<span class="loading">這天公休，請選擇其他日期</span>';
+        return;
+      }
+      const times = res.times || [];
+      if (!times.length) {
+        slotsDiv.innerHTML = '<span class="loading">這天的時段都被預約走了，請選其他日期</span>';
+        return;
+      }
+      slotsDiv.innerHTML = '';
+      times.forEach(t => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'slot-btn';
+        btn.textContent = t;
+        btn.onclick = () => {
+          document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          selectedTime = t;
+          updateReviewButtonState();
+        };
+        slotsDiv.appendChild(btn);
+      });
+    }
+
+    function updateReviewButtonState() {
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const birthday = document.getElementById('birthday').value;
+      const btn = document.getElementById('btnReview');
+
+      let needsReferrerPhone = false;
+      if (currentCategory) {
+        if (currentCategory.discountMode === 'multi') {
+          document.querySelectorAll('.discount-checkbox:checked').forEach(cb => {
+            const d = currentCategory.discounts.find(x => x.id === cb.value);
+            if (d && (d.requiresReferrerPhone || d.requiresCompanionPhone)) needsReferrerPhone = true;
+          });
+        } else {
+          const sel = document.getElementById('discountSingleSelect');
+          if (sel && sel.value) {
+            const d = currentCategory.discounts.find(x => x.id === sel.value);
+            if (d && (d.requiresReferrerPhone || d.requiresCompanionPhone)) needsReferrerPhone = true;
+          }
+        }
+      }
+      const referrerPhoneInput = document.getElementById('referrerPhone');
+      const referrerPhoneOk = !needsReferrerPhone || (referrerPhoneInput && referrerPhoneInput.value.trim());
+
+      const ready = name && phone && birthday && selectedTime && referrerPhoneOk;
+      btn.disabled = !ready;
+      if (!selectedTime) btn.textContent = '請先選擇時段';
+      else if (!birthday) btn.textContent = '請填寫生日';
+      else if (!referrerPhoneOk) btn.textContent = '請填寫對方電話';
+      else btn.textContent = '下一步：確認預約內容';
+    }
+    document.getElementById('birthday').addEventListener('change', updateReviewButtonState);
+    document.getElementById('name').addEventListener('input', function () {
+      const filtered = this.value.replace(/[^\u4e00-\u9fa5]/g, '');
+      if (filtered !== this.value) this.value = filtered;
+    });
+    document.getElementById('phone').addEventListener('input', function () {
+      const filtered = this.value.replace(/[^0-9]/g, '');
+      if (filtered !== this.value) this.value = filtered;
+    });
+    ['name', 'phone'].forEach(id => document.getElementById(id).addEventListener('input', updateReviewButtonState));
+    document.getElementById('discountArea').addEventListener('change', updateReviewButtonState);
+    document.getElementById('discountArea').addEventListener('input', updateReviewButtonState);
+
+    // ---------- 電話查詢：舊客自動帶出姓名/生日並鎖住；新客才顯示「您從哪裡知道我們的」 ----------
+    let phoneCheckTimer = null;
+
+    // 姓名遮蔽：2字保留第一字（林O），3字以上保留頭尾、中間固定一個O（林O美／歐O美），不透露真實字數
+    function maskName(name) {
+      if (!name) return '';
+      const chars = Array.from(name);
+      if (chars.length <= 2) return chars[0] + 'O';
+      return chars[0] + 'O' + chars[chars.length - 1];
+    }
+
+    function applyLockState(isLocked, maskedName, birthday) {
+      const nameInput = document.getElementById('name');
+      const birthdayInput = document.getElementById('birthday');
+      const hint = document.getElementById('returningCustomerHint');
+
+      if (isLocked) {
+        nameInput.value = maskedName;
+        nameInput.readOnly = true;
+        if (birthday) birthdayInput.value = birthday;
+        birthdayInput.readOnly = true;
+        hint.textContent = '如需修改個人資料，請直接私訊聯繫店家';
+        hint.style.display = 'block';
+      } else {
+        nameInput.readOnly = false;
+        birthdayInput.readOnly = false;
+        hint.style.display = 'none';
+      }
+    }
+
+    document.getElementById('phone').addEventListener('input', function () {
+      clearTimeout(phoneCheckTimer);
+      const phone = this.value.trim();
+      const referralBlock = document.getElementById('referralBlock');
+      if (!phone) {
+        referralBlock.style.display = 'none';
+        applyLockState(false);
+        updateReviewButtonState();
+        return;
+      }
+      phoneCheckTimer = setTimeout(() => {
+        google.script.run
+          .withSuccessHandler(info => {
+            referralBlock.style.display = info.isNew ? 'block' : 'none';
+            if (info.isNew) {
+              applyLockState(false);
+            } else {
+              applyLockState(true, maskName(info.name), info.birthday);
+            }
+            updateReviewButtonState();
+          })
+          .withFailureHandler(() => {})
+          .lookupCustomerByPhone(phone);
+        applyDiscountAvailability();
+      }, 500);
+    });
+
+    document.getElementById('referralSource').addEventListener('change', function () {
+      const detailInput = document.getElementById('referralDetail');
+      const needsDetail = (CONFIG.referralSourcesWithDetail || []).includes(this.value);
+      detailInput.style.display = needsDetail ? 'block' : 'none';
+      if (!needsDetail) detailInput.value = '';
+    });
+
+    document.getElementById('btnReview').addEventListener('click', function () {
+      renderSummary();
+      showStep('step-confirm');
+    });
+    document.getElementById('btnDetailsBack').addEventListener('click', function () {
+      showStep('step-categoryNotice');
+    });
+
+    // ---------- Step 4：最終確認 ----------
+    function collectFormData() {
+      const addonSelections = {};
+      document.querySelectorAll('.addon-select').forEach(sel => {
+        addonSelections[sel.dataset.groupId] = sel.value;
+      });
+
+      let discountSelections = [];
+      if (currentCategory.discountMode === 'multi') {
+        document.querySelectorAll('.discount-checkbox:checked').forEach(cb => discountSelections.push(cb.value));
+      } else {
+        const sel = document.getElementById('discountSingleSelect');
+        if (sel && sel.value) discountSelections.push(sel.value);
+      }
+
+      return {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        birthday: document.getElementById('birthday').value,
+        categoryId: currentCategory.id,
+        mainItemId: document.getElementById('mainItemId').value,
+        addonSelections: addonSelections,
+        discountSelections: discountSelections,
+        date: selectedDate,
+        time: selectedTime,
+        note: document.getElementById('note').value,
+        noticeAgreed: document.getElementById('noticeAgree').checked,
+        referralSource: document.getElementById('referralBlock').style.display !== 'none'
+          ? document.getElementById('referralSource').value
+          : '',
+        referralDetail: document.getElementById('referralBlock').style.display !== 'none'
+          ? document.getElementById('referralDetail').value
+          : '',
+        referrerPhone: document.getElementById('referrerPhone') ? document.getElementById('referrerPhone').value : '',
+      };
+    }
+
+    function calcEstimatedTotal(mainItem, addonSelections, discountSelections) {
+      let total = 0;
+      let hasVariable = false;
+
+      if (mainItem.price === null) {
+        hasVariable = true;
+      } else {
+        total += mainItem.price;
+      }
+
+      (currentCategory.addonGroups || []).forEach(group => {
+        const selId = (addonSelections && addonSelections[group.groupId]) || 'none';
+        if (selId === 'none') return;
+        const opt = group.options.find(o => o.id === selId);
+        if (!opt) return;
+        if (opt.price === null) hasVariable = true;
+        else total += opt.price;
+      });
+
+      (discountSelections || []).forEach(discountId => {
+        const d = currentCategory.discounts.find(x => x.id === discountId);
+        if (d) total += d.price;
+      });
+
+      return { total: total, hasVariable: hasVariable };
+    }
+
+    function renderSummary() {
+      const fd = collectFormData();
+      const mainItem = currentCategory.mainItems.find(m => m.id === fd.mainItemId);
+
+      const addonLines = [];
+      (currentCategory.addonGroups || []).forEach(group => {
+        const selId = fd.addonSelections[group.groupId];
+        if (!selId || selId === 'none') return;
+        const opt = group.options.find(o => o.id === selId);
+        if (opt) addonLines.push(`${group.label}：${opt.name}`);
+      });
+
+      const discountLines = fd.discountSelections.map(id => {
+        const d = currentCategory.discounts.find(x => x.id === id);
+        return d ? `${d.name}（NTD.${d.price}）` : '';
+      }).filter(Boolean);
+
+      const rows = [
+        ['服務分類', currentCategory.name],
+        ['主要項目', mainItem ? mainItem.name : ''],
+        ['加購項目', addonLines.length ? addonLines.join('<br>') : '無'],
+        ['優惠項目', discountLines.length ? discountLines.join('<br>') : '無'],
+        ['預約日期', fd.date],
+        ['預約時段', fd.time],
+        ['姓名', fd.name],
+        ['電話', fd.phone],
+        ['生日', fd.birthday || '（未填）'],
+        ['備註', fd.note || '（未填）'],
+      ];
+      if (fd.referrerPhone) {
+        rows.push(['介紹人電話', fd.referrerPhone]);
+      }
+      if (fd.referralSource) {
+        rows.push(['得知管道', fd.referralSource + (fd.referralDetail ? `（${fd.referralDetail}）` : '')]);
+      }
+
+      if (mainItem) {
+        const est = calcEstimatedTotal(mainItem, fd.addonSelections, fd.discountSelections);
+        const priceText = est.hasVariable
+          ? `約 NTD.${est.total}＋現場確認項目`
+          : `NTD.${est.total}`;
+        rows.push(['預計金額', `<b>${priceText}</b><br><span style="color:#999; font-size:12px;">實際金額以現場結算為主</span>`]);
+      }
+
+      const table = document.getElementById('summaryTable');
+      table.innerHTML = rows.map(r =>
+        `<tr><td class="k">${r[0]}</td><td>${r[1]}</td></tr>`
+      ).join('');
+    }
+
+    document.getElementById('btnBackToEdit').addEventListener('click', function () {
+      showStep('step-details');
+    });
+
+    document.getElementById('btnSubmitFinal').addEventListener('click', function () {
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = '送出中...';
+      const formData = collectFormData();
+
+      google.script.run
+        .withSuccessHandler(res => { btn.disabled = false; btn.textContent = '確認送出預約'; handleResult(res); })
+        .withFailureHandler(err => {
+          btn.disabled = false;
+          btn.textContent = '確認送出預約';
+          showMessage(false, '送出失敗：' + err.message);
+        })
+        .submitBooking(formData);
+    });
+
+    // ---------- Step 5：結果 ----------
+    function handleResult(res) {
+      if (res.success) {
+        document.getElementById('resultMessage').innerHTML =
+          `<div id="message" class="ok" style="display:block;">預約成功！這是您第 ${res.visitCount} 次來店，我們到時候見！</div>`;
+
+        const depositBlock = document.getElementById('depositBlock');
+        if (res.depositInfo && res.depositInfo.required) {
+          const d = res.depositInfo;
+          depositBlock.style.display = 'block';
+          depositBlock.innerHTML = `
+            <div class="deposit-box">
+              <div>您是新客，需支付定金以完成預約：</div>
+              <div class="amount">NTD. ${d.amount}</div>
+              <div class="bank-row"><span>銀行</span><span>${d.bank.bankName}（${d.bank.bankCode}）</span></div>
+              <div class="bank-row"><span>帳號</span><span>${d.bank.account}</span></div>
+              <div style="margin-top:10px;" class="deadline">
+                請於送出預約後 ${d.deadlineHours} 小時內，將匯款截圖傳送至官方LINE，逾時預約將自動取消。
+              </div>
+            </div>`;
+        } else {
+          depositBlock.style.display = 'none';
+        }
+
+        const lineBindBlock = document.getElementById('lineBindBlock');
+        if (!res.lineBound) {
+          lineBindBlock.style.display = 'block';
+          lineBindBlock.innerHTML = `
+            <div class="line-bind-box">
+              <div>🔔 綁定官方LINE，開啟預約提醒、生日優惠通知服務！</div>
+              <div style="font-size:13px; color:#555; margin-top:4px;">加好友後輸入您的電話號碼即可完成綁定</div>
+              <a class="btn-line" href="${CONFIG.lineAddFriendUrl}" target="_blank">加入官方LINE好友</a>
+            </div>`;
+        } else {
+          lineBindBlock.style.display = 'none';
+        }
+
+        showStep('step-result');
+      } else {
+        showMessage(false, res.message);
+        showStep('step-details');
+        dayStatusCache = {};
+        renderCalendarMonth();
+      }
+    }
+
+    document.getElementById('btnBookAnother').addEventListener('click', function () {
+      document.getElementById('note').value = '';
+      document.getElementById('categoryId').value = '';
+      document.getElementById('referralBlock').style.display = 'none';
+      document.getElementById('referralSource').value = '';
+      document.getElementById('referralDetail').value = '';
+      document.getElementById('referralDetail').style.display = 'none';
+      document.getElementById('addonBlock').innerHTML = '';
+      document.getElementById('discountBlock').style.display = 'none';
+      document.getElementById('discountArea').innerHTML = '';
+      document.getElementById('noticeAgree').checked = false;
+      document.getElementById('btnNoticeNext').disabled = true;
+      currentCategory = null;
+      selectedTime = null;
+      selectedDate = null;
+      calendarMonthOffset = 0;
+      dayStatusCache = {};
+      document.getElementById('calGrid').innerHTML = '<span class="loading">請先選擇主要項目</span>';
+      document.getElementById('calMonthLabel').textContent = '－';
+      document.getElementById('slots').innerHTML = '<span class="loading">請先選擇日期</span>';
+      document.getElementById('message').style.display = 'none';
+      updateReviewButtonState();
+      showStep('step-category');
+    });
+
+    function showMessage(ok, text) {
+      const msg = document.getElementById('message');
+      msg.className = ok ? 'ok' : 'err';
+      msg.textContent = text;
+    }
+  </script>
+</body>
+</html>
