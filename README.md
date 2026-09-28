@@ -1,7 +1,7 @@
 # 美業線上預約與顧客管理系統
 **Beauty Salon Booking System｜Google Apps Script × LINE Messaging API**
 
-為自己經營的美睫／霧眉工作室，從零打造的線上預約系統。目標是**用系統取代重複性的人工客服工作**：客人在 LINE 官方帳號點開預約頁，就能自己查空檔、看價格、送出預約、查詢與改期；店家這端則自動同步 Google 日曆、自動建立顧客資料與預約紀錄。
+為友人經營的美睫／霧眉工作室，從零打造的線上預約系統。目標是**用系統取代重複性的人工客服工作**：客人在 LINE 官方帳號點開預約頁，就能自己查空檔、看價格、送出預約、查詢與改期；店家這端則自動同步 Google 日曆、自動建立顧客資料與預約紀錄。
 
 ![Google Apps Script](https://img.shields.io/badge/Google%20Apps%20Script-4285F4?logo=google&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)
