@@ -156,7 +156,7 @@ flowchart LR
 
 **Apps Script 專案**
 
-![Apps Script 編輯器](images/222.png)
+![Apps Script 編輯器](images/222.jpg)
 
 > 截圖中的顧客資料皆為測試資料。
 
