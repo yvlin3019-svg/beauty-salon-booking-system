@@ -45,7 +45,7 @@
 #### 1. 預約與試算流程
 | 預約須知與項目選擇 | 舊客帶入與金額試算 | 即時可預約時段月曆 |
 | :---: | :---: | :---: |
-| ![預約須知](images/demo_booking_1.png) | ![金額試算](images/demo_booking_2.png) | ![可預約時段](images/demo_booking_3.png) |
+| ![預約須知](images/IMG_3289.jpg) | ![金額試算](images/IMG_3298.jpg) | ![可預約時段](images/IMG_3295.jpg) |
 
 #### 2. 預約完成與 LINE 綁定
 * **新客預約：** 顯示匯款訂金資訊與 24 小時內完成提醒。
